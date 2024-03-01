@@ -199,8 +199,11 @@ class _OrderDetailsState extends State<OrderDetails> {
                       title: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
+                          Text(item['name'],style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold
+                          ),),
                           Text('${item['date']}(${item['order_amount']})'),
-                          Text(item['name']),
                         ],
                       ),
                       subtitle: Text('${item['areaname']}(${item['areacd']})'),

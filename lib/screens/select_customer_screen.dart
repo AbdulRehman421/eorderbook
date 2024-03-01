@@ -71,6 +71,8 @@ class _SelectCustomerScreenState extends State<SelectCustomerScreen> {
 
     for (var customer in parties) {
       debugPrint(customer["name"]);
+      final code = customer['code']; // Extract the code
+      final isCodePresent = await _isCodePresentInLocalDB(code.toString());
       fetchd.add(Account(
           id: customer['ID'],
           name: customer['name'],
@@ -78,7 +80,10 @@ class _SelectCustomerScreenState extends State<SelectCustomerScreen> {
           code: customer['code'],
           distCode: customer['dist_code'],
           areaCd: customer['areacd'],
-          active: customer['active']));
+          active: customer['active'],
+        cardColor: isCodePresent ? Colors.green : null,
+      ),
+      );
     }
     if (parties.length <= count!) {
       isLoaded = false;
@@ -128,6 +133,17 @@ class _SelectCustomerScreenState extends State<SelectCustomerScreen> {
     _scrollController.dispose();
     super.dispose();
   }
+  Future<bool> _isCodePresentInLocalDB(String code) async {
+    final databasePath = await getDatabasesPath();
+    final database = await openDatabase(join(databasePath, 'eOrderBook.db'));
+    final result = await database.query(
+        'eorderbook_master', // Replace with the correct table name
+        where: 'code = ?',
+        whereArgs: [code]
+    );
+    database.close();
+    return result.isNotEmpty;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -145,7 +161,17 @@ class _SelectCustomerScreenState extends State<SelectCustomerScreen> {
               },
               icon: const Icon(Icons.home))
         ],
-        title: const Text("Select Customer"),
+        centerTitle: true,
+        title: Column(
+          children: [
+            const Text("Select Customer",style: TextStyle(
+              fontSize: 24
+            ),),
+            Text(widget.areaId.name,style: TextStyle(
+              fontSize: 16
+            ),)
+          ],
+        ),
       ),
       body: Stack(
         children: [
@@ -322,6 +348,7 @@ class _SelectCustomerScreenState extends State<SelectCustomerScreen> {
                       },
                     )
                         : ListView.separated(
+
                       shrinkWrap: true,
                       physics: const BouncingScrollPhysics(
                           parent: ClampingScrollPhysics()),
@@ -386,6 +413,7 @@ class _SelectCustomerScreenState extends State<SelectCustomerScreen> {
                             }
                           },
                           child: Card(
+                            color: items[index].cardColor,
                             child: Padding(
                               padding: const EdgeInsets.only(left: 16),
                               child: Row(
@@ -408,9 +436,8 @@ class _SelectCustomerScreenState extends State<SelectCustomerScreen> {
                                               fontWeight:
                                               FontWeight.bold),
                                         ),
-
                                         Text(
-                                            "${items[index].address} , ${widget.areaId.name}"),
+                                            "Address : ${items[index].address}"),
                                       ],
                                     ),
                                   ),
@@ -428,7 +455,6 @@ class _SelectCustomerScreenState extends State<SelectCustomerScreen> {
                         );
                       },
                     ),
-
                     const SizedBox(
                       height: 12,
                     ),
@@ -436,7 +462,8 @@ class _SelectCustomerScreenState extends State<SelectCustomerScreen> {
                       const SizedBox(
                           height: 30,
                           width: 30,
-                          child: CircularProgressIndicator()),
+                          child: CircularProgressIndicator(),
+                      ),
                     const SizedBox(
                       height: 48,
                     )

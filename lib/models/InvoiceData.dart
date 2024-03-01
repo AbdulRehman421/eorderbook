@@ -35,7 +35,13 @@ class MyData {
 
   List<Product> get product => products;
 
-  double get total =>
-      products.map<double>((p) => p.total).reduce((a, b) => a + b);
+  double get total {
+    if (products.isNotEmpty) {
+      return products.map<double>((p) => p.total).reduce((a, b) => a + b);
+    } else {
+      return 0.0; // or any other default value you prefer
+    }
+  }
+
 
 }

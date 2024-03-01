@@ -1,3 +1,7 @@
+import 'dart:ui';
+
+import 'package:flutter/src/material/colors.dart';
+
 class Account {
   int id;
   int distCode;
@@ -6,6 +10,8 @@ class Account {
   String address;
   int areaCd;
   String active;
+  Color? cardColor; // Property to store the card color
+
 
   Account({
     required this.id,
@@ -15,6 +21,7 @@ class Account {
     required this.address,
     required this.areaCd,
     required this.active,
+    this.cardColor,
   });
 
   Map<String, dynamic> toMap() {

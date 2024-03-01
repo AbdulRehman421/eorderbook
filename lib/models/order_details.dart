@@ -8,6 +8,7 @@ class OrderDetails {
   final double orderAmount;
   final String latitude;
   final String longitude;
+  final String remarks;
 
   OrderDetails({
     required this.orderId,
@@ -19,6 +20,7 @@ class OrderDetails {
     required this.orderAmount,
     required this.latitude,
     required this.longitude,
+    required this.remarks,
   });
 
   Map<String, dynamic> toMap() {
@@ -32,6 +34,7 @@ class OrderDetails {
       'order_amount': orderAmount,
       'latitude': latitude,
       'longitude': longitude,
+      'remarks': remarks,
     };
   }
 
@@ -46,6 +49,7 @@ class OrderDetails {
       orderAmount: map['order_amount'],
       latitude: map['latitude'],
       longitude: map['longitude'],
+      remarks: map['remarks'],
     );
   }
 }

@@ -453,7 +453,7 @@ class _InvoiceListScreenState extends State<InvoiceListScreen> with RouteAware {
                     ),
                     myDataList.isNotEmpty
                     ? Text(
-                      'xOrder Amount: ${totalAmountOfAllOrders.toStringAsFixed(2)}',
+                      'Order Amount: ${totalAmountOfAllOrders.toStringAsFixed(2)}',
                       style: TextStyle(
                         color: Colors.black, // Customize the color if needed
                         fontWeight: FontWeight.bold,
@@ -502,7 +502,7 @@ class _InvoiceListScreenState extends State<InvoiceListScreen> with RouteAware {
                                                 .customer
                                                 .address),
                                             Text(
-                                              "Due Amount: ${_searchResult[index].total.toStringAsFixed(0)}",
+                                              "Due Amount: ${_searchResult[index].total.toStringAsFixed(0) ?? 0}",
                                               textAlign:
                                               TextAlign.left,
                                             ),
@@ -879,7 +879,7 @@ class _InvoiceListScreenState extends State<InvoiceListScreen> with RouteAware {
                                                       .width *
                                                       0.7,
                                                   child: Text(
-                                                    "Total Amount: ${myDataList[index].total.toStringAsFixed(2)}",
+                                                    "Total Amount: ${myDataList[index].total.toStringAsFixed(2) ?? 0}",
                                                     textAlign:
                                                     TextAlign
                                                         .left,

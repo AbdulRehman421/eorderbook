@@ -125,7 +125,8 @@ class DatabaseHelper {
         date TEXT NOT NULL,
         order_amount REAL NOT NULL,
         latitude TEXT NOT NULL,
-        longitude TEXT NOT NULL
+        longitude TEXT NOT NULL,
+        remarks TEXT NOT NULL
       )
     ''');
 
@@ -265,7 +266,6 @@ class DatabaseHelper {
       return orderDetailsList;
     }
   }
-
   Future<List<Map<String, dynamic>>> getProductDetailsForOrder(orderId) async {
     // Open the database
     final databasePath = await getDatabasesPath();
@@ -538,6 +538,36 @@ class DatabaseHelper {
   }
 
   insertOrder(orderDetails, List<Product> productDetails) async {
+    Database db = await database;
+
+    if(!db.isOpen) {
+      String path = join(await getDatabasesPath(), 'eOrderBook.db');
+      db = await openDatabase(path);
+    }
+
+    // Insert order details into eorderbook_master table
+    int orderMasterId = await db.insert('eorderbook_master', orderDetails,
+        conflictAlgorithm: ConflictAlgorithm.replace);
+
+    // Insert product details into eorderbook table
+    for (var element in productDetails) {
+      await db.insert(
+      'eorderbook',
+          {
+            'pcode': element.pCode,
+            'order_id': orderMasterId,
+            'qty': element.quantity,
+            'bonus': element.bonus,
+            'discount': element.discount,
+            'rate': element.tp
+          },
+          conflictAlgorithm: ConflictAlgorithm.replace);
+    }
+
+    // Close the database
+    await db.close();
+  }
+  insertOrders(orderDetails, List<Product> productDetails) async {
     Database db = await database;
 
     if(!db.isOpen) {

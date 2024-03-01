@@ -5,6 +5,7 @@ import 'package:eorderbook/models/area.dart';
 import 'package:eorderbook/models/eorderbook_master.dart';
 import 'package:eorderbook/models/product.dart';
 import 'package:eorderbook/models/sector.dart';
+import 'package:eorderbook/screens/invoice_list_screen.dart';
 import 'package:eorderbook/screens/select_customer_screen.dart';
 import 'package:eorderbook/services/db_helper.dart';
 import 'package:eorderbook/utils/Utils.dart';
@@ -394,68 +395,325 @@ class _SelectProductsScreenState extends State<SelectProductsScreen> {
       );
     }
   }
+  List<String> options = [
+    "No Order",
+    "Shop Closed",
+    "Other"
+  ];
+  Future<bool> showSendingConfirmationDialog(BuildContext context) async {
+    return await showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text("Delete Confirmation"),
+          content: const Text("Are you sure you want to delete this item?"),
+          actions: <Widget>[
+            TextButton(
+              child: const Text("CANCEL"),
+              onPressed: () {
+                Navigator.of(context).pop(false);
+              },
+            ),
+            TextButton(
+              child: const Text("DELETE"),
+              onPressed: () {
+                Navigator.of(context).pop(true);
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
     // final _items = CryptoModel.getCrypto();
-    return Scaffold(
-      appBar: AppBar(
-        elevation: 0,
-        centerTitle: true,
-        title: Column(
-          children: [
-            SingleChildScrollView(
+    return WillPopScope(
+      onWillPop: () async{
+        return false;
+      },
+      child: Scaffold(
+        appBar: AppBar(
+          elevation: 0,
+          centerTitle: true,
+          title: Column(
+            children: [
+              SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: Text(
+                    widget.customer.name,
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                  )),
+              SingleChildScrollView(
                 scrollDirection: Axis.horizontal,
                 child: Text(
-                  widget.customer.name,
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                )),
-            SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              child: Text(
-                '(Total : ${totalPrice.toStringAsFixed(2)}) ${widget.area.name} ',
-                style: TextStyle(fontSize: 16),
-              ),
-            )
-          ],
-        ),
-        actions: [
-          items.isNotEmpty || getSelectedItem().isNotEmpty
-              ? Visibility(
-            visible: isButtonVisible,
-                child: ElevatedButton(
-                onPressed: () async {
+                  '(Total : ${totalPrice.toStringAsFixed(2)}) ${widget.area.name} ',
+                  style: TextStyle(fontSize: 16),
+                ),
+              )
+            ],
+          ),
+          actions: [
+            items.isNotEmpty || getSelectedItem().isNotEmpty
+                ? Visibility(
+              visible: isButtonVisible,
+                  child: ElevatedButton(
+                  onPressed: () async {
 
 
 
-                  if (getSelectedItem().isNotEmpty) {
-                    bool locationEnabled = await Geolocator.isLocationServiceEnabled();
-                    if (!locationEnabled) {
-                      // Show a dialog to enable location services
-                      showDialog(
-                        context: context,
-                        builder: (context) {
-                          return AlertDialog(
-                            title: Text("Enable Location"),
-                            content: Text("Please enable location services to proceed."),
-                            actions: [
-                              TextButton(
-                                onPressed: () {
-                                  Navigator.pop(context);
-                                },
-                                child: Text("OK"),
-                              ),
-                            ],
+                    if (getSelectedItem().isNotEmpty) {
+                      bool locationEnabled = await Geolocator.isLocationServiceEnabled();
+                      if (!locationEnabled) {
+                        // Show a dialog to enable location services
+                        showDialog(
+                          context: context,
+                          builder: (context) {
+                            return AlertDialog(
+                              title: Text("Enable Location"),
+                              content: Text("Please enable location services to proceed."),
+                              actions: [
+                                TextButton(
+                                  onPressed: () {
+                                    Navigator.pop(context);
+                                  },
+                                  child: Text("OK"),
+                                ),
+                              ],
+                            );
+                          },
+                        );
+                      } else {
+
+                        LocationPermission permission = await Geolocator.checkPermission();
+                        if (permission == LocationPermission.denied) {
+                          // Show a toast or dialog indicating that location permission is required
+                          Fluttertoast.showToast(
+                            msg: "Location permission is required to proceed.",
+                            toastLength: Toast.LENGTH_SHORT,
+                            gravity: ToastGravity.BOTTOM,
+                            timeInSecForIosWeb: 1,
+                            backgroundColor: Colors.grey[600],
+                            textColor: Colors.white,
+                            fontSize: 16.0,
                           );
-                        },
-                      );
+                        } else {
+
+                          // Request location permissions if not granted
+                          if (permission == LocationPermission.deniedForever) {
+                            // Show a dialog or navigate to settings to enable location services
+
+                            showDialog(
+                              context: context,
+                              builder: (context) {
+                                return AlertDialog(
+                                  title: Text("Enable Location"),
+                                  content: Text("Please enable location services in your device settings to proceed."),
+                                  actions: [
+                                    TextButton(
+                                      onPressed: () {
+                                        Navigator.pop(context);
+                                      },
+                                      child: Text("OK"),
+                                    ),
+                                  ],
+                                );
+                              },
+                            );
+                          } else {
+
+                            // Location permission granted or not permanently denied, proceed to get location
+                            try {
+                              await Utils.showLoaderDialog(context ,"Sending data", "Please wait..." );
+                              setState(() {
+                                isButtonVisible = false; // Set visibility to false when the button is clicked
+                              });
+                              Position position = await _getCurrentLocation();
+                              print('selcted items ${selectedProducts}');
+                              SharedPreferences prefs = await SharedPreferences.getInstance();
+                              final username = prefs.getString('username');
+                              EOrderBookMaster order = EOrderBookMaster(
+                                remarks: "OK",
+                                latitude: position.latitude.toString(),
+                                longitude: position.longitude.toString(),
+                                userName: username!,
+                                distCode: widget.area.distCode,
+                                appOrderNo: generatedInvoiceId,
+                                code: widget.customer.code,
+                                date: DateTime.now().toString(),
+                                orderAmount: totalPrice,
+                              );
+
+                              debugPrint("date: ${DateTime.now()}");
+
+                              await DatabaseHelper.instance.insertOrder(order.toMap(), getSelectedItem());
+
+                              Navigator.pushAndRemoveUntil(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => SelectCustomerScreen(
+                                      areaId: widget.area, sectorId: widget.sector),
+                                ),
+                                  (Route<dynamic> route) => false,
+                              );
+                            } catch (e) {
+
+                              // Handle the case when location is not available
+                              print("Order Creation Failed: $e");
+                              Fluttertoast.showToast(
+                                msg: "Order Creation Failed",
+                                toastLength: Toast.LENGTH_SHORT,
+                                gravity: ToastGravity.BOTTOM,
+                                timeInSecForIosWeb: 1,
+                                backgroundColor: Colors.grey[600],
+                                textColor: Colors.white,
+                                fontSize: 16.0,
+                              );
+                            }
+                          }
+                        }
+                      }
                     } else {
 
-                      LocationPermission permission = await Geolocator.checkPermission();
-                      if (permission == LocationPermission.denied) {
-                        // Show a toast or dialog indicating that location permission is required
+                      try {
+                        bool confirmEmptyOrder = await showDialog(
+                          context: context,
+                          builder: (context) {
+                            return AlertDialog(
+                              title: Text("Empty Order",textAlign: TextAlign.center),
+                              content: Text("Do you want to save the order without products?"),
+                              actions: [
+                                Row(
+                                  children: [
+                                    ElevatedButton(
+                                      onPressed: () {
+                                        Navigator.pop(context, false); // User selected No
+                                      },
+                                      child: Text("No"),
+                                    ),
+                                    ElevatedButton(
+                                      onPressed: () {
+                                        Navigator.pop(context, true); // User selected Yes
+                                      },
+                                      child: Text("Yes"),
+                                    ),
+                                  ],
+                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                )
+                              ],
+                            );
+                          },
+                        );
+                       if(confirmEmptyOrder != null && confirmEmptyOrder){
+                         String? selectedOption = await showDialog(
+                           context: context,
+                           builder: (context) {
+                             TextEditingController otherOptionController = TextEditingController();
+
+                             bool isTextEntered = false;
+
+                             return AlertDialog(
+                               title: Text("Select an Option"),
+                               content: Column(
+                                 mainAxisSize: MainAxisSize.min,
+                                 children: options.map((option) {
+                                   if (option == "Other") {
+                                     return ListTile(
+                                       title: TextFormField(
+                                         controller: otherOptionController,
+                                         decoration:
+                                         InputDecoration(labelText: "Enter Other Option"),
+                                         onChanged: (value) {
+                                           setState(() {
+                                             isTextEntered = value.isNotEmpty;
+                                           });
+                                         },
+                                       ),
+                                       onTap: () =>
+                                           Navigator.pop(context, otherOptionController.text),
+                                     );
+                                   } else {
+                                     return ListTile(
+                                       title: Text(option),
+                                       onTap: () => Navigator.pop(context, option),
+                                     );
+                                   }
+                                 }).toList(),
+                               ),
+                               actions: [
+                                 Row(
+                                   children: [
+                                     ElevatedButton(
+                                       onPressed: () {
+                                         Navigator.push(
+                                           context,
+                                           MaterialPageRoute(
+                                             builder: (context) => InvoiceListScreen(),
+                                           ),
+                                         );
+                                       },
+                                       child: Text('Cancel'),
+                                     ),
+                                     ElevatedButton(
+                                       onPressed: () {
+                                         Navigator.pop(context, otherOptionController.text);
+                                       },
+                                       child: Text('Submit'),
+                                     ),
+                                   ],
+                                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                 )
+
+                               ],
+                             );
+                           },
+                         );
+
+                         if (selectedOption != null && selectedOption.isNotEmpty) {
+                           // Continue with your logic using the selectedOption
+                           await Utils.showLoaderDialog(
+                               context, "Sending data", "Please wait...");
+                           setState(() {
+                             isButtonVisible = false;
+                           });
+
+                           Position position = await _getCurrentLocation();
+                           SharedPreferences prefs = await SharedPreferences.getInstance();
+                           final username = prefs.getString('username');
+                           EOrderBookMaster order = EOrderBookMaster(
+                             remarks: selectedOption.toString(),
+                             latitude: position.latitude.toString(),
+                             longitude: position.longitude.toString(),
+                             userName: username!,
+                             distCode: widget.area.distCode,
+                             appOrderNo: generatedInvoiceId,
+                             code: widget.customer.code,
+                             date: DateTime.now().toString(),
+                             orderAmount: totalPrice,
+                           );
+
+                           await DatabaseHelper.instance
+                               .insertOrder(order.toMap(), getSelectedItem());
+
+                           Navigator.pushAndRemoveUntil(
+                             context,
+                             MaterialPageRoute(
+                               builder: (context) => SelectCustomerScreen(
+                                 areaId: widget.area,
+                                 sectorId: widget.sector,
+                               ),
+                             ),
+                                 (Route<dynamic> route) => false,
+                           );
+                         }
+                       }
+                      } catch (e) {
+
+                        // Handle the case when location is not available
+                        print("Order Creation Failed: $e");
                         Fluttertoast.showToast(
-                          msg: "Location permission is required to proceed.",
+                          msg: "Order Creation Failed",
                           toastLength: Toast.LENGTH_SHORT,
                           gravity: ToastGravity.BOTTOM,
                           timeInSecForIosWeb: 1,
@@ -463,429 +721,358 @@ class _SelectProductsScreenState extends State<SelectProductsScreen> {
                           textColor: Colors.white,
                           fontSize: 16.0,
                         );
-                      } else {
-
-                        // Request location permissions if not granted
-                        if (permission == LocationPermission.deniedForever) {
-                          // Show a dialog or navigate to settings to enable location services
-
-                          showDialog(
-                            context: context,
-                            builder: (context) {
-                              return AlertDialog(
-                                title: Text("Enable Location"),
-                                content: Text("Please enable location services in your device settings to proceed."),
-                                actions: [
-                                  TextButton(
-                                    onPressed: () {
-                                      Navigator.pop(context);
-                                    },
-                                    child: Text("OK"),
-                                  ),
-                                ],
-                              );
-                            },
-                          );
-                        } else {
-
-                          // Location permission granted or not permanently denied, proceed to get location
-                          try {
-                            await Utils.showLoaderDialog(context ,"Sending data", "Please wait..." );
-                            setState(() {
-                              isButtonVisible = false; // Set visibility to false when the button is clicked
-                            });
-                            Position position = await _getCurrentLocation();
-
-                            SharedPreferences prefs = await SharedPreferences.getInstance();
-                            final username = prefs.getString('username');
-                            EOrderBookMaster order = EOrderBookMaster(
-                              latitude: position.latitude.toString(),
-                              longitude: position.longitude.toString(),
-                              userName: username!,
-                              distCode: widget.area.distCode,
-                              appOrderNo: generatedInvoiceId,
-                              code: widget.customer.code,
-                              date: DateTime.now().toString(),
-                              orderAmount: totalPrice,
-                            );
-
-                            debugPrint("date: ${DateTime.now()}");
-
-                            await DatabaseHelper.instance.insertOrder(order.toMap(), getSelectedItem());
-
-                            Navigator.pushAndRemoveUntil(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => SelectCustomerScreen(
-                                    areaId: widget.area, sectorId: widget.sector),
-                              ),
-                                (Route<dynamic> route) => false,
-                            );
-                          } catch (e) {
-
-                            // Handle the case when location is not available
-                            print("Error getting location: $e");
-                            Fluttertoast.showToast(
-                              msg: "Location not available. Please try again or enable location services.",
-                              toastLength: Toast.LENGTH_SHORT,
-                              gravity: ToastGravity.BOTTOM,
-                              timeInSecForIosWeb: 1,
-                              backgroundColor: Colors.grey[600],
-                              textColor: Colors.white,
-                              fontSize: 16.0,
-                            );
-                          }
-                        }
                       }
-                    }
-                  } else {
 
-                    Fluttertoast.showToast(
-                      msg: "Please select a product",
-                      toastLength: Toast.LENGTH_SHORT,
-                      gravity: ToastGravity.BOTTOM,
-                      timeInSecForIosWeb: 1,
-                      backgroundColor: Colors.grey[600],
-                      textColor: Colors.white,
-                      fontSize: 16.0,
-                    );
-                  }
-                },
-                child: Visibility(
-                    visible: visibility, child: const Text("Save"))),
-              )
-              : const SizedBox()
-        ],
-        leading: IconButton(onPressed: () {
-          _appNotification();
-        } , icon: Icon(Icons.settings)),
-      ),
-      body: Stack(
-        children: [
-          GestureDetector(
-            onTap: () => FocusManager.instance.primaryFocus?.unfocus(),
-            child: ListView(
-              controller: _scrollController,
-              children: [
-                Visibility(
-                  visible: visibility,
-                  child: items.isNotEmpty
-                      ? Column(
-                    children: [
-                      Container(
-                        margin: const EdgeInsets.all(4),
-                        decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(4),
-                            border: Border.all(color: Colors.green)),
-                        child: ListTile(
-                          contentPadding:
-                          const EdgeInsets.only(left: 6, right: 0),
-                          leading: const Icon(Icons.search),
-                          title: TextField(
-                            onSubmitted: (value) {
-                                onSearchTextChanged(value);
-                                setState(() {});
-                                searchFromStart ? initialStart() : initial();
-                            },
-                            controller: controller,
-                            decoration: const InputDecoration(
-                                hintText: 'Search',
-                                border: InputBorder.none),
-                            textInputAction: TextInputAction.search,
-                            onChanged: (value) {
-                             if(!searchOnTap){
-                               if (_debounce?.isActive ?? false) _debounce!.cancel();
-                               _debounce = Timer(const Duration(milliseconds: 500), () {
-                                   onSearchTextChanged(value);
-                                   setState(() {});
-                                   searchFromStart ? initialStart() : initial();
-                               });
-                             }
-                            },
-                          ),
-                          trailing: SizedBox(
-                            width: 40,
-                            child: InkWell(
-                              child: const Icon(
-                                Icons.cancel,
-                                size: 28,
-                              ),
-                              onTap: () {
-                                controller.clear();
-                                onSearchTextChanged('');
-                                FocusManager.instance.primaryFocus
-                                    ?.hasPrimaryFocus;
+                      
+
+
+                      // Fluttertoast.showToast(
+                      //   msg: "Please select a product",
+                      //   toastLength: Toast.LENGTH_SHORT,
+                      //   gravity: ToastGravity.BOTTOM,
+                      //   timeInSecForIosWeb: 1,
+                      //   backgroundColor: Colors.grey[600],
+                      //   textColor: Colors.white,
+                      //   fontSize: 16.0,
+                      // );
+                    }
+                  },
+                  child: Visibility(
+                      visible: visibility, child: const Text("Save"))),
+                )
+                : const SizedBox()
+          ],
+          leading: IconButton(onPressed: () {
+            _appNotification();
+          } , icon: Icon(Icons.settings)),
+        ),
+        body: Stack(
+          children: [
+            GestureDetector(
+              onTap: () => FocusManager.instance.primaryFocus?.unfocus(),
+              child: ListView(
+                controller: _scrollController,
+                children: [
+                  Visibility(
+                    visible: visibility,
+                    child: items.isNotEmpty
+                        ? Column(
+                      children: [
+                        Container(
+                          margin: const EdgeInsets.all(4),
+                          decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(4),
+                              border: Border.all(color: Colors.green)),
+                          child: ListTile(
+                            contentPadding:
+                            const EdgeInsets.only(left: 6, right: 0),
+                            leading: const Icon(Icons.search),
+                            title: TextField(
+                              onSubmitted: (value) {
+                                  onSearchTextChanged(value);
+                                  setState(() {});
+                                  searchFromStart ? initialStart() : initial();
                               },
+                              controller: controller,
+                              decoration: const InputDecoration(
+                                  hintText: 'Search',
+                                  border: InputBorder.none),
+                              textInputAction: TextInputAction.search,
+                              onChanged: (value) {
+                               if(!searchOnTap){
+                                 if (_debounce?.isActive ?? false) _debounce!.cancel();
+                                 _debounce = Timer(const Duration(milliseconds: 500), () {
+                                     onSearchTextChanged(value);
+                                     setState(() {});
+                                     searchFromStart ? initialStart() : initial();
+                                 });
+                               }
+                              },
+                            ),
+                            trailing: SizedBox(
+                              width: 40,
+                              child: InkWell(
+                                child: const Icon(
+                                  Icons.cancel,
+                                  size: 28,
+                                ),
+                                onTap: () {
+                                  controller.clear();
+                                  onSearchTextChanged('');
+                                  FocusManager.instance.primaryFocus
+                                      ?.hasPrimaryFocus;
+                                },
+                              ),
                             ),
                           ),
                         ),
-                      ),
 
-                      _searchResult.isNotEmpty ||
-                          controller.text.isNotEmpty
-                          ? Column(
-                        children: [
-                          ListView.builder(
-                            itemBuilder: (context, index) {
-                           if (!showPositiveBalanceOnly ||
-                           (_searchResult[index].balance > 0)) {
-                             return InkWell(
-                                onTap: () async {
-                                  if (!_searchResult[index]
-                                      .selected) {
-                                    showEditProductDialog(
-                                        context,
-                                        _searchResult[index],
-                                        index);
-                                  }
-                                },
-                                child:  Card(
-                                  color: _searchResult[index]
-                                      .selected ? Colors.green : Colors.white,
-                                  child: Padding(
-                                    padding: EdgeInsets.only(left: 16),
-                                    child: Row(
-                                      mainAxisAlignment:
-                                      MainAxisAlignment.end,
-                                      crossAxisAlignment:
-                                      CrossAxisAlignment.end,
-                                      children: [
-                                        Expanded(
-                                          child: Column(
-                                            mainAxisAlignment:
-                                            MainAxisAlignment.start,
-                                            crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                            children: [
-                                              Row(
-                                                children: [
-                                                  Expanded(
-                                                    child: Text(
-                                                      _searchResult[
-                                                      index]
-                                                          .name +
-                                                          "        " +
-                                                          _searchResult[
-                                                          index]
-                                                              .pCode +
-                                                          '(${_searchResult[index].balance})',
-                                                      style: const TextStyle(
-                                                          fontSize:
-                                                          13,
-                                                          fontWeight:
-                                                          FontWeight
-                                                              .bold),
-                                                    ),
-                                                  ),
-                                                ],
-                                              ),
-                                              Row(
-                                                mainAxisAlignment:
-                                                MainAxisAlignment
-                                                    .spaceBetween,
-                                                crossAxisAlignment:
-                                                CrossAxisAlignment
-                                                    .start,
-                                                children: [
-                                                  Row(
-                                                    children: [
-                                                      const Text(
-                                                        'Price:',
-                                                        style: TextStyle(
-                                                            fontSize:
-                                                            13),
-                                                      ),
-                                                      Text(
-                                                        '${_searchResult[index].tp}',
-                                                        style: const TextStyle(
-                                                            fontSize:
-                                                            13),
-                                                      ),
-                                                    ],
-                                                  ),
-                                                  Row(
-                                                    children: [
-                                                      const Text(
-                                                        'Disc:',
-                                                        style: TextStyle(
-                                                            fontSize:
-                                                            13),
-                                                      ),
-                                                      Padding(
-                                                        padding: const EdgeInsets
-                                                            .symmetric(
-                                                            horizontal:
-                                                            12.0,
-                                                            vertical:
-                                                            4),
-                                                        child:
-                                                        Text(
-                                                          '${_searchResult[index].discount}',
-                                                          style: const TextStyle(
-                                                              fontSize:
-                                                              13),
-                                                        ),
-                                                      ),
-                                                    ],
-                                                  ),
-                                                  Row(
-                                                    children: [
-                                                      const Text(
-                                                        'Bns:',
-                                                        style: TextStyle(
-                                                            fontSize:
-                                                            13),
-                                                      ),
-                                                      Padding(
-                                                        padding: const EdgeInsets
-                                                            .symmetric(
-                                                            horizontal:
-                                                            12.0,
-                                                            vertical:
-                                                            4),
-                                                        child:
-                                                        Text(
-                                                          '${_searchResult[index].bonus}',
-                                                          style: const TextStyle(
-                                                              fontSize:
-                                                              13),
-                                                        ),
-                                                      ),
-                                                    ],
-                                                  ),
-                                                  Row(
-                                                    children: [
-                                                      const Text(
-                                                        'Qty:',
-                                                        style: TextStyle(
-                                                            fontSize:
-                                                            13),
-                                                      ),
-                                                      Padding(
-                                                        padding: const EdgeInsets
-                                                            .symmetric(
-                                                            horizontal:
-                                                            12.0,
-                                                            vertical:
-                                                            4),
-                                                        child:
-                                                        Text(
-                                                          '${_searchResult[index].quantity}',
-                                                          style: const TextStyle(
-                                                              fontSize:
-                                                              13),
-                                                        ),
-                                                      ),
-                                                    ],
-                                                  ),
-                                                ],
-                                              ),
-                                            ],
-                                          ),
-                                        ),
-                                        const SizedBox(width: 10),
-                                        Column(
-                                          children: [
-                                            const SizedBox(
-                                              height: 6,
-                                            ),
-                                            !_searchResult[index]
-                                                .selected
-                                                ? Container()
-                                                : CircleAvatar(
-                                              maxRadius: 16,
-                                              backgroundColor:
-                                              Colors.red,
-                                              child:
-                                              GestureDetector(
-                                                onTap:
-                                                    () async {
-                                                  showSearchWarningAlert(
-                                                      context,
-                                                      index,
-                                                      0);
-                                                },
-                                                child:
-                                                const Icon(
-                                                  Icons
-                                                      .remove,
-                                                  size: 18,
-                                                  color: Colors
-                                                      .white,
-                                                ),
-                                              ),
-                                            ),
-                                            const SizedBox(
-                                              height: 6,
-                                            ),
-                                          ],
-                                        )
-                                      ],
-                                    ),
-                                  ),
-                                ),
-                              );
-                            }else {
-                              return Container();
-                              }
-                            },
-                            itemCount: _searchResult.isEmpty
-                                ? 0
-                                : _searchResult.length,
-                            shrinkWrap: true,
-                            physics: const ClampingScrollPhysics(),
-                          ),
-                        ],
-                      )
-                        : Container(),
-                      Visibility(
-                        visible:
-                        selectedProducts.isNotEmpty && showSelected,
-                        child: Column(
+                        _searchResult.isNotEmpty ||
+                            controller.text.isNotEmpty
+                            ? Column(
                           children: [
-                            const Padding(
-                              padding: EdgeInsets.all(12.0),
-                              child: Text(
-                                "Selected",
-                                style: TextStyle(
-                                    fontSize: 18,
-                                    fontWeight: FontWeight.bold),
-                              ),
-                            ),
                             ListView.builder(
                               itemBuilder: (context, index) {
-                                return productItem(
-                                    selectedProducts, index);
+                             if (!showPositiveBalanceOnly ||
+                             (_searchResult[index].balance > 0)) {
+                               return InkWell(
+                                  onTap: () async {
+                                    if (!_searchResult[index]
+                                        .selected) {
+                                      showEditProductDialog(
+                                          context,
+                                          _searchResult[index],
+                                          index);
+                                    }
+                                  },
+                                  child:  Card(
+                                    color: _searchResult[index]
+                                        .selected ? Colors.green : Colors.white,
+                                    child: Padding(
+                                      padding: EdgeInsets.only(left: 16),
+                                      child: Row(
+                                        mainAxisAlignment:
+                                        MainAxisAlignment.end,
+                                        crossAxisAlignment:
+                                        CrossAxisAlignment.end,
+                                        children: [
+                                          Expanded(
+                                            child: Column(
+                                              mainAxisAlignment:
+                                              MainAxisAlignment.start,
+                                              crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                              children: [
+                                                Row(
+                                                  children: [
+                                                    Expanded(
+                                                      child: Text(
+                                                        _searchResult[
+                                                        index]
+                                                            .name +
+                                                            "        " +
+                                                            _searchResult[
+                                                            index]
+                                                                .pCode +
+                                                            '(${_searchResult[index].balance})',
+                                                        style: const TextStyle(
+                                                            fontSize:
+                                                            13,
+                                                            fontWeight:
+                                                            FontWeight
+                                                                .bold),
+                                                      ),
+                                                    ),
+                                                  ],
+                                                ),
+                                                Row(
+                                                  mainAxisAlignment:
+                                                  MainAxisAlignment
+                                                      .spaceBetween,
+                                                  crossAxisAlignment:
+                                                  CrossAxisAlignment
+                                                      .start,
+                                                  children: [
+                                                    Row(
+                                                      children: [
+                                                        const Text(
+                                                          'Price:',
+                                                          style: TextStyle(
+                                                              fontSize:
+                                                              13),
+                                                        ),
+                                                        Text(
+                                                          '${_searchResult[index].tp}',
+                                                          style: const TextStyle(
+                                                              fontSize:
+                                                              13),
+                                                        ),
+                                                      ],
+                                                    ),
+                                                    Row(
+                                                      children: [
+                                                        const Text(
+                                                          'Disc:',
+                                                          style: TextStyle(
+                                                              fontSize:
+                                                              13),
+                                                        ),
+                                                        Padding(
+                                                          padding: const EdgeInsets
+                                                              .symmetric(
+                                                              horizontal:
+                                                              12.0,
+                                                              vertical:
+                                                              4),
+                                                          child:
+                                                          Text(
+                                                            '${_searchResult[index].discount}',
+                                                            style: const TextStyle(
+                                                                fontSize:
+                                                                13),
+                                                          ),
+                                                        ),
+                                                      ],
+                                                    ),
+                                                    Row(
+                                                      children: [
+                                                        const Text(
+                                                          'Bns:',
+                                                          style: TextStyle(
+                                                              fontSize:
+                                                              13),
+                                                        ),
+                                                        Padding(
+                                                          padding: const EdgeInsets
+                                                              .symmetric(
+                                                              horizontal:
+                                                              12.0,
+                                                              vertical:
+                                                              4),
+                                                          child:
+                                                          Text(
+                                                            '${_searchResult[index].bonus}',
+                                                            style: const TextStyle(
+                                                                fontSize:
+                                                                13),
+                                                          ),
+                                                        ),
+                                                      ],
+                                                    ),
+                                                    Row(
+                                                      children: [
+                                                        const Text(
+                                                          'Qty:',
+                                                          style: TextStyle(
+                                                              fontSize:
+                                                              13),
+                                                        ),
+                                                        Padding(
+                                                          padding: const EdgeInsets
+                                                              .symmetric(
+                                                              horizontal:
+                                                              12.0,
+                                                              vertical:
+                                                              4),
+                                                          child:
+                                                          Text(
+                                                            '${_searchResult[index].quantity}',
+                                                            style: const TextStyle(
+                                                                fontSize:
+                                                                13),
+                                                          ),
+                                                        ),
+                                                      ],
+                                                    ),
+                                                  ],
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                          const SizedBox(width: 10),
+                                          Column(
+                                            children: [
+                                              const SizedBox(
+                                                height: 6,
+                                              ),
+                                              !_searchResult[index]
+                                                  .selected
+                                                  ? Container()
+                                                  : CircleAvatar(
+                                                maxRadius: 16,
+                                                backgroundColor:
+                                                Colors.red,
+                                                child:
+                                                GestureDetector(
+                                                  onTap:
+                                                      () async {
+                                                    showSearchWarningAlert(
+                                                        context,
+                                                        index,
+                                                        0);
+                                                  },
+                                                  child:
+                                                  const Icon(
+                                                    Icons
+                                                        .remove,
+                                                    size: 18,
+                                                    color: Colors
+                                                        .white,
+                                                  ),
+                                                ),
+                                              ),
+                                              const SizedBox(
+                                                height: 6,
+                                              ),
+                                            ],
+                                          )
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                );
+                              }else {
+                                return Container();
+                                }
                               },
-                              itemCount: selectedProducts.length,
+                              itemCount: _searchResult.isEmpty
+                                  ? 0
+                                  : _searchResult.length,
                               shrinkWrap: true,
                               physics: const ClampingScrollPhysics(),
-                            )
+                            ),
                           ],
+                        )
+                          : Container(),
+                        Visibility(
+                          visible:
+                          selectedProducts.isNotEmpty && showSelected,
+                          child: Column(
+                            children: [
+                              const Padding(
+                                padding: EdgeInsets.all(12.0),
+                                child: Text(
+                                  "Selected",
+                                  style: TextStyle(
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.bold),
+                                ),
+                              ),
+                              ListView.builder(
+                                itemBuilder: (context, index) {
+                                  return productItem(
+                                      selectedProducts, index);
+                                },
+                                itemCount: selectedProducts.length,
+                                shrinkWrap: true,
+                                physics: const ClampingScrollPhysics(),
+                              )
+                            ],
+                          ),
                         ),
-                      ),
-                      const SizedBox(
-                        height: 12,
-                      ),
-                      if (isLoading)
                         const SizedBox(
-                            height: 30,
-                            width: 30,
-                            child: CircularProgressIndicator()),
-                      const SizedBox(
-                        height: 100,
-                      )
-                    ],
-                  )
-                      : ConstantWidget.NotFoundWidget(
-                      context, "Product not added yet"),
-                ),
-              ],
+                          height: 12,
+                        ),
+                        if (isLoading)
+                          const SizedBox(
+                              height: 30,
+                              width: 30,
+                              child: CircularProgressIndicator()),
+                        const SizedBox(
+                          height: 100,
+                        )
+                      ],
+                    )
+                        : ConstantWidget.NotFoundWidget(
+                        context, "Product not added yet"),
+                  ),
+                ],
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
+        resizeToAvoidBottomInset: false,
       ),
-      resizeToAvoidBottomInset: false,
     );
   }
 
@@ -1013,7 +1200,11 @@ class _SelectProductsScreenState extends State<SelectProductsScreen> {
   bool editing = true;
   String? editingId;
   List<Product> selectedProducts = [];
+  List selectedProductss = ["14070" ,"WARIOR INFU 100ML" , 200.5 , 5,0.0,109566 , true ];
 
+  List getSelectedItemss() {
+    return selectedProductss;
+  }
   List<Product> getSelectedItem() {
     return selectedProducts;
   }

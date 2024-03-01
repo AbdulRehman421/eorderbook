@@ -8,6 +8,7 @@ class EOrderBookMaster {
   double orderAmount;
   String latitude;
   String longitude;
+  String remarks;
 
   EOrderBookMaster({
     required this.userName,
@@ -18,6 +19,7 @@ class EOrderBookMaster {
     required this.orderAmount,
     required this.latitude,
     required this.longitude,
+    required this.remarks,
   });
 
   Map<String, dynamic> toMap() {
@@ -30,6 +32,7 @@ class EOrderBookMaster {
       'order_amount': orderAmount,
       'latitude': latitude,
       'longitude': longitude,
+      'remarks': remarks,
     };
   }
 
@@ -43,6 +46,7 @@ class EOrderBookMaster {
       orderAmount: map['order_amount'].toDouble(),
       latitude: map['latitude'],
       longitude: map['longitude'],
+      remarks: map['remarks'],
     );
   }
 
@@ -56,6 +60,7 @@ class EOrderBookMaster {
       orderAmount: json['order_amount'],
       latitude: json['latitude'],
       longitude: json['longitude'],
+      remarks: json['remarks'],
     );
   }
 
@@ -69,6 +74,7 @@ class EOrderBookMaster {
       'order_amount': orderAmount,
       'latitude': latitude,
       'longitude': longitude,
+      'remarks': remarks,
     };
   }
 }
