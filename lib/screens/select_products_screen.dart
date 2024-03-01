@@ -709,8 +709,6 @@ class _SelectProductsScreenState extends State<SelectProductsScreen> {
                          }
                        }
                       } catch (e) {
-
-                        // Handle the case when location is not available
                         print("Order Creation Failed: $e");
                         Fluttertoast.showToast(
                           msg: "Order Creation Failed",
