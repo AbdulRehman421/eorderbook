@@ -87,7 +87,7 @@ class _SelectProductsScreenState extends State<SelectProductsScreen> {
   }
 
   Future<List<Product>> fetchItems(int offset, int limit) async {
-    List<Product> fetchd = [];
+    List<Product> fetched = [];
     setState(() {
       isLoading = true;
     });
@@ -95,7 +95,7 @@ class _SelectProductsScreenState extends State<SelectProductsScreen> {
     Database database = await openDatabase(dbPath);
     int? count = controller.text.isNotEmpty
         ? Sqflite.firstIntValue(await database.rawQuery(
-        "SELECT COUNT(*) FROM product WHERE name LIKE  '%${controller.text}%'  OR pcode LIKE '%${controller.text}%'"))
+        "SELECT COUNT(*) FROM product WHERE name LIKE '%${controller.text}%' OR pcode LIKE '%${controller.text}%'"))
         : Sqflite.firstIntValue(
         await database.rawQuery("SELECT COUNT(*) FROM Product"));
 
@@ -103,9 +103,9 @@ class _SelectProductsScreenState extends State<SelectProductsScreen> {
 
     List<Map<String, dynamic>> products = controller.text.isNotEmpty
         ? await database.rawQuery(
-        "SELECT * FROM product WHERE name LIKE '%${controller.text}%' OR pcode LIKE '%${controller.text}%' LIMIT $limit OFFSET $offset")
-        : await database
-        .rawQuery("SELECT * FROM product LIMIT $limit OFFSET $offset");
+        "SELECT * FROM product WHERE name LIKE '%${controller.text}%' OR pcode LIKE '%${controller.text}%' ORDER BY name LIMIT $limit OFFSET $offset")
+        : await database.rawQuery(
+        "SELECT * FROM product ORDER BY name LIMIT $limit OFFSET $offset");
     database.close();
     if (products.length <= count!) {
       isLoading = false;
@@ -131,20 +131,20 @@ class _SelectProductsScreenState extends State<SelectProductsScreen> {
           distCode: product['dist_code'],
           cmpCd: product['cmpcd'],
           grCd: product['grcd']);
-      final index =
-      selectedProducts.indexWhere((element) => element.pCode == product['pcode']);
+      final index = selectedProducts.indexWhere((element) => element.pCode == product['pcode']);
       if (index >= 0) {
         p.selected = selectedProducts[index].selected;
         p.discount = selectedProducts[index].discount;
         p.quantity = selectedProducts[index].quantity;
       }
 
-      fetchd.add(p);
+      fetched.add(p);
     }
     await Future.delayed(const Duration(milliseconds: 500));
 
-    return fetchd;
+    return fetched;
   }
+
   Future<List<Product>> fetchStartingItems(int offset, int limit) async {
     List<Product> fetched = [];
     setState(() {
@@ -167,10 +167,10 @@ class _SelectProductsScreenState extends State<SelectProductsScreen> {
 
     debugPrint("Product count $count");
 
-    // Construct the query to search only from the start
+    // Construct the query to search only from the start and order alphabetically
     String query = controller.text.isNotEmpty
-        ? "SELECT * FROM product WHERE $whereClause LIMIT $limit OFFSET $offset"
-        : "SELECT * FROM product LIMIT $limit OFFSET $offset";
+        ? "SELECT * FROM product WHERE $whereClause ORDER BY name LIMIT $limit OFFSET $offset"
+        : "SELECT * FROM product ORDER BY name LIMIT $limit OFFSET $offset";
 
     List<Map<String, dynamic>> products = await database.rawQuery(query);
     database.close();
@@ -202,7 +202,8 @@ class _SelectProductsScreenState extends State<SelectProductsScreen> {
         grCd: product['grcd'],
       );
 
-      final index = selectedProducts.indexWhere((element) => element.pCode == product['pcode']);
+      final index =
+      selectedProducts.indexWhere((element) => element.pCode == product['pcode']);
       if (index >= 0) {
         p.selected = selectedProducts[index].selected;
         p.discount = selectedProducts[index].discount;
@@ -216,6 +217,7 @@ class _SelectProductsScreenState extends State<SelectProductsScreen> {
 
     return fetched;
   }
+
 
 
   initial() async {
@@ -458,7 +460,7 @@ class _SelectProductsScreenState extends State<SelectProductsScreen> {
             items.isNotEmpty || getSelectedItem().isNotEmpty
                 ? Visibility(
               visible: isButtonVisible,
-                  child: ElevatedButton(
+                  child: IconButton(
                   onPressed: () async {
 
 
@@ -735,14 +737,55 @@ class _SelectProductsScreenState extends State<SelectProductsScreen> {
                       // );
                     }
                   },
-                  child: Visibility(
-                      visible: visibility, child: const Text("Save"))),
+                  icon : Visibility(
+                      visible: visibility, child: Icon(Icons.check_circle_outline,color: Colors.green,))),
                 )
-                : const SizedBox()
+                : const SizedBox(),
+            SizedBox(
+              width: 10,
+            ),
           ],
-          leading: IconButton(onPressed: () {
-            _appNotification();
-          } , icon: Icon(Icons.settings)),
+          leading: IconButton(onPressed: () async {
+            bool confirmCancelOrder = await showDialog(
+              context: context,
+              builder: (context) {
+                return AlertDialog(
+                  title: Text("Cancel Order",textAlign: TextAlign.center),
+                  content: Text("Do you want to cancel the order?"),
+                  actions: [
+                    Row(
+                      children: [
+                        ElevatedButton(
+                          onPressed: () {
+                            Navigator.pop(context, false); // User selected No
+                          },
+                          child: Text("No"),
+                        ),
+                        ElevatedButton(
+                          onPressed: () {
+                            Navigator.pop(context, true); // User selected Yes
+                          },
+                          child: Text("Yes"),
+                        ),
+                      ],
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    )
+                  ],
+                );
+              },
+            );
+            if(confirmCancelOrder != null && confirmCancelOrder) {
+              Navigator.pushAndRemoveUntil(
+                context,
+                MaterialPageRoute(
+                  builder: (context) =>
+                      SelectCustomerScreen(
+                          areaId: widget.area, sectorId: widget.sector),
+                ),
+                    (Route<dynamic> route) => false,
+              );
+            }
+          }, icon: Icon(Icons.cancel_outlined,color: Colors.red,))
         ),
         body: Stack(
           children: [
@@ -1021,7 +1064,220 @@ class _SelectProductsScreenState extends State<SelectProductsScreen> {
                             ),
                           ],
                         )
-                          : Container(),
+                          :Column(
+                          children: [
+                            ListView.builder(
+                              itemBuilder: (context, index) {
+                                if (!showPositiveBalanceOnly ||
+                                    (items[index].balance > 0)) {
+                                  return InkWell(
+                                    onTap: () async {
+                                      if (!items[index]
+                                          .selected) {
+                                        showEditProductDialog(
+                                            context,
+                                            items[index],
+                                            index);
+                                      }
+                                    },
+                                    child:  Card(
+                                      color: items[index]
+                                          .selected ? Colors.green : Colors.white,
+                                      child: Padding(
+                                        padding: EdgeInsets.only(left: 16),
+                                        child: Row(
+                                          mainAxisAlignment:
+                                          MainAxisAlignment.end,
+                                          crossAxisAlignment:
+                                          CrossAxisAlignment.end,
+                                          children: [
+                                            Expanded(
+                                              child: Column(
+                                                mainAxisAlignment:
+                                                MainAxisAlignment.start,
+                                                crossAxisAlignment:
+                                                CrossAxisAlignment.start,
+                                                children: [
+                                                  Row(
+                                                    children: [
+                                                      Expanded(
+                                                        child: Text(
+                                                          items[
+                                                          index]
+                                                              .name +
+                                                              "        " +
+                                                              items[
+                                                              index]
+                                                                  .pCode +
+                                                              '(${items[index].balance})',
+                                                          style: const TextStyle(
+                                                              fontSize:
+                                                              13,
+                                                              fontWeight:
+                                                              FontWeight
+                                                                  .bold),
+                                                        ),
+                                                      ),
+                                                    ],
+                                                  ),
+                                                  Row(
+                                                    mainAxisAlignment:
+                                                    MainAxisAlignment
+                                                        .spaceBetween,
+                                                    crossAxisAlignment:
+                                                    CrossAxisAlignment
+                                                        .start,
+                                                    children: [
+                                                      Row(
+                                                        children: [
+                                                          const Text(
+                                                            'Price:',
+                                                            style: TextStyle(
+                                                                fontSize:
+                                                                13),
+                                                          ),
+                                                          Text(
+                                                            '${items[index].tp}',
+                                                            style: const TextStyle(
+                                                                fontSize:
+                                                                13),
+                                                          ),
+                                                        ],
+                                                      ),
+                                                      Row(
+                                                        children: [
+                                                          const Text(
+                                                            'Disc:',
+                                                            style: TextStyle(
+                                                                fontSize:
+                                                                13),
+                                                          ),
+                                                          Padding(
+                                                            padding: const EdgeInsets
+                                                                .symmetric(
+                                                                horizontal:
+                                                                12.0,
+                                                                vertical:
+                                                                4),
+                                                            child:
+                                                            Text(
+                                                              '${items[index].discount}',
+                                                              style: const TextStyle(
+                                                                  fontSize:
+                                                                  13),
+                                                            ),
+                                                          ),
+                                                        ],
+                                                      ),
+                                                      Row(
+                                                        children: [
+                                                          const Text(
+                                                            'Bns:',
+                                                            style: TextStyle(
+                                                                fontSize:
+                                                                13),
+                                                          ),
+                                                          Padding(
+                                                            padding: const EdgeInsets
+                                                                .symmetric(
+                                                                horizontal:
+                                                                12.0,
+                                                                vertical:
+                                                                4),
+                                                            child:
+                                                            Text(
+                                                              '${items[index].bonus}',
+                                                              style: const TextStyle(
+                                                                  fontSize:
+                                                                  13),
+                                                            ),
+                                                          ),
+                                                        ],
+                                                      ),
+                                                      Row(
+                                                        children: [
+                                                          const Text(
+                                                            'Qty:',
+                                                            style: TextStyle(
+                                                                fontSize:
+                                                                13),
+                                                          ),
+                                                          Padding(
+                                                            padding: const EdgeInsets
+                                                                .symmetric(
+                                                                horizontal:
+                                                                12.0,
+                                                                vertical:
+                                                                4),
+                                                            child:
+                                                            Text(
+                                                              '${items[index].quantity}',
+                                                              style: const TextStyle(
+                                                                  fontSize:
+                                                                  13),
+                                                            ),
+                                                          ),
+                                                        ],
+                                                      ),
+                                                    ],
+                                                  ),
+                                                ],
+                                              ),
+                                            ),
+                                            const SizedBox(width: 10),
+                                            Column(
+                                              children: [
+                                                const SizedBox(
+                                                  height: 6,
+                                                ),
+                                                !items[index]
+                                                    .selected
+                                                    ? Container()
+                                                    : CircleAvatar(
+                                                  maxRadius: 16,
+                                                  backgroundColor:
+                                                  Colors.red,
+                                                  child:
+                                                  GestureDetector(
+                                                    onTap:
+                                                        () async {
+                                                      showSearchWarningAlert(
+                                                          context,
+                                                          index,
+                                                          0);
+                                                    },
+                                                    child:
+                                                    const Icon(
+                                                      Icons
+                                                          .remove,
+                                                      size: 18,
+                                                      color: Colors
+                                                          .white,
+                                                    ),
+                                                  ),
+                                                ),
+                                                const SizedBox(
+                                                  height: 6,
+                                                ),
+                                              ],
+                                            )
+                                          ],
+                                        ),
+                                      ),
+                                    ),
+                                  );
+                                }else {
+                                  return Container();
+                                }
+                              },
+                              itemCount: items.isEmpty
+                                  ? 0
+                                  : items.length,
+                              shrinkWrap: true,
+                              physics: const ClampingScrollPhysics(),
+                            ),
+                          ],
+                        ),
                         Visibility(
                           visible:
                           selectedProducts.isNotEmpty && showSelected,
@@ -1069,6 +1325,10 @@ class _SelectProductsScreenState extends State<SelectProductsScreen> {
             ),
           ],
         ),
+        floatingActionButton: FloatingActionButton(
+            onPressed: () {
+          _appNotification();
+        },child: Icon(Icons.settings)),
         resizeToAvoidBottomInset: false,
       ),
     );
@@ -1114,6 +1374,7 @@ class _SelectProductsScreenState extends State<SelectProductsScreen> {
                       stateSetter(() {
                         showSelected = value;
                         savePreferences();
+                        setState(() {});
                       });
                     },
                   ),
@@ -1127,6 +1388,7 @@ class _SelectProductsScreenState extends State<SelectProductsScreen> {
                       stateSetter(() {
                         showPositiveBalanceOnly = value;
                         savePreferences();
+                        setState(() {});
                       });
                     },
                   ),
@@ -1140,6 +1402,7 @@ class _SelectProductsScreenState extends State<SelectProductsScreen> {
                       stateSetter(() {
                         searchFromStart = value;
                         savePreferences();
+                        setState(() {});
                       });
                     },
                   ),
@@ -1153,6 +1416,7 @@ class _SelectProductsScreenState extends State<SelectProductsScreen> {
                       stateSetter(() {
                         searchRefresh = value;
                         savePreferences();
+                        setState(() {});
                       });
                     },
                   ),
@@ -1179,6 +1443,7 @@ class _SelectProductsScreenState extends State<SelectProductsScreen> {
                       stateSetter(() {
                         searchOnTap = value;
                         savePreferences();
+                        setState(() {});
                       });
                     },
                   ),
@@ -1848,7 +2113,6 @@ class _SelectProductsScreenState extends State<SelectProductsScreen> {
           children: [
             Expanded(
               child: Column(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Row(

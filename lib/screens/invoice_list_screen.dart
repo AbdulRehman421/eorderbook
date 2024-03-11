@@ -51,7 +51,7 @@ class _InvoiceListScreenState extends State<InvoiceListScreen> with RouteAware {
     Database database = await openDatabase(dbPath);
 
     String query = '''
-      SELECT eorderbook_master.order_id, eorderbook_master.date, eorderbook_master.order_amount,
+      SELECT eorderbook_master.order_id, eorderbook_master.date,eorderbook_master.remarks, eorderbook_master.order_amount,
             eorderbook_master.app_orderno, account.ID as accId, account.name as accName,
             account.code, account.dist_code, account.address, account.areacd, account.active
       FROM eorderbook_master
@@ -64,6 +64,7 @@ class _InvoiceListScreenState extends State<InvoiceListScreen> with RouteAware {
       for (Map<String, dynamic> row in result) {
         // Access the order, customer, sector, and area information
         int orderId = row['order_id'];
+        String remarks = row['remarks'];
         int orderNumber = row['app_orderno'];
         String partyName = row['accName'];
         int partyId = row['code'];
@@ -147,7 +148,9 @@ class _InvoiceListScreenState extends State<InvoiceListScreen> with RouteAware {
                 distCode: accDistCode,
                 areaCd: areaCode,
                 active: accActive),
-            date));
+            date,
+        remarks
+        ));
       }
     } else {
       debugPrint("nothing");
@@ -452,11 +455,18 @@ class _InvoiceListScreenState extends State<InvoiceListScreen> with RouteAware {
                       ),
                     ),
                     myDataList.isNotEmpty
-                    ? Text(
-                      'Order Amount: ${totalAmountOfAllOrders.toStringAsFixed(2)}',
-                      style: TextStyle(
-                        color: Colors.black, // Customize the color if needed
-                        fontWeight: FontWeight.bold,
+                    ? Card(
+                      color: Colors.greenAccent,
+                      child: Padding(
+                        padding: const EdgeInsets.only(right: 40,left: 40, top: 10,bottom: 10),
+                        child: Text(
+                          'Order Amount: ${totalAmountOfAllOrders.toStringAsFixed(2)}',
+                          style: TextStyle(
+                            fontSize: 20,
+                            color: Colors.black, // Customize the color if needed
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
                       ),
                     )
                     :Container(),
@@ -465,191 +475,212 @@ class _InvoiceListScreenState extends State<InvoiceListScreen> with RouteAware {
                         shrinkWrap: true,
                         physics: const ClampingScrollPhysics(),
                         itemBuilder: (contextb, index) {
-                          return Card(
-                            child: InkWell(
+                          MyData currentData = _searchResult[index];
+                          bool isSelected = selectedOrderIds
+                              .contains(currentData.invoiceId);
+                          return Slidable(
+                            enabled: true,
+                            endActionPane: ActionPane(
+                                motion: const ScrollMotion(),
+                                children: [
+                                  SizedBox(
+                                    width: 5,
+                                  ),
+                                  SlidableAction(
+                                    autoClose: true,
+                                    onPressed: (ctx) async {
+                                      AlertDialog alert = AlertDialog(
+                                        title: const Text(
+                                            'Are you sure?'),
+                                        content: const Text(
+                                            'By clicking this button, this invoice will be deleted'),
+                                        actions: <Widget>[
+                                          TextButton(
+                                            child: const Text('Yes'),
+                                            onPressed: () {
+                                              Navigator.of(context)
+                                                  .pop();
+                                              deleteMyData(
+                                                  _searchResult[index]);
+                                            },
+                                          ),
+                                          TextButton(
+                                            child:
+                                            const Text('Cancel'),
+                                            onPressed: () {
+                                              Navigator.of(context)
+                                                  .pop();
+                                            },
+                                          ),
+                                        ],
+                                      );
+                                      showDialog(
+                                        context: context,
+                                        builder:
+                                            (BuildContext context) {
+                                          return alert;
+                                        },
+                                      );
+                                    },
+                                    backgroundColor:
+                                    Color(0xFFFE4A49),
+                                    foregroundColor: Colors.white,
+                                    icon: Icons.delete,
+                                    label: 'Delete',
+                                    borderRadius:
+                                    BorderRadius.circular(10),
+                                  ),
+                                  SizedBox(
+                                    width: 5,
+                                  ),
+                                  SlidableAction(
+                                    onPressed: (ctx) async {
+                                      AlertDialog alert = AlertDialog(
+                                        title: const Text(
+                                            'Are you sure?'),
+                                        content: const Text(
+                                            'By clicking this button, this invoice will be redirect to editing'),
+                                        actions: <Widget>[
+                                          TextButton(
+                                            child: const Text('Yes'),
+                                            onPressed: () {
+                                              Navigator.pop(context);
+                                              Navigator.push(
+                                                context,
+                                                MaterialPageRoute(
+                                                  builder: (context) =>
+                                                      ReSelectProductsScreen(
+                                                          myData: _searchResult[
+                                                          index]),
+                                                ),
+                                              );
+                                            },
+                                          ),
+                                          TextButton(
+                                            child:
+                                            const Text('Cancel'),
+                                            onPressed: () {
+                                              Navigator.of(context)
+                                                  .pop();
+                                            },
+                                          ),
+                                        ],
+                                      );
+                                      showDialog(
+                                        context: context,
+                                        builder:
+                                            (BuildContext context) {
+                                          return alert;
+                                        },
+                                      );
+                                    },
+                                    backgroundColor: Colors.blue,
+                                    foregroundColor: Colors.white,
+                                    icon: Icons.edit,
+                                    label: 'Edit',
+                                    borderRadius:
+                                    BorderRadius.circular(10),
+                                  ),
+                                  SizedBox(
+                                    width: 5,
+                                  ),
+                                ]),
+                            child: Card(
                               child: Padding(
-                                padding: const EdgeInsets.symmetric(
-                                    vertical: 12.0, horizontal: 24),
-                                child: Column(
-                                  mainAxisAlignment:
-                                  MainAxisAlignment.start,
-                                  crossAxisAlignment:
-                                  CrossAxisAlignment.start,
+                                padding: EdgeInsets.symmetric(
+                                    vertical: MediaQuery.devicePixelRatioOf(context), horizontal: MediaQuery.devicePixelRatioOf(context)),
+                                child: Row(
                                   children: [
-                                    const Row(
-                                      mainAxisAlignment:
-                                      MainAxisAlignment
-                                          .spaceBetween,
-                                      children: [],
+                                    // Checkbox(
+                                    //   value: isSelected,
+                                    //   onChanged: (value) {
+                                    //     setState(() {
+                                    //       if (value != null && value) {
+                                    //         selectedOrderIds.add(currentData.invoiceId);
+                                    //       } else {
+                                    //         selectedOrderIds.remove(currentData.invoiceId);
+                                    //       }
+                                    //     });
+                                    //   },
+                                    // ),
+                                    Checkbox(
+                                      value:
+                                      selectedOrderIds.contains(
+                                          currentData.invoiceId),
+                                      onChanged: (value) {
+                                        setState(() {
+                                          if (value!) {
+                                            selectedOrderIds.add(
+                                                currentData
+                                                    .invoiceId);
+                                          } else {
+                                            selectedOrderIds.remove(
+                                                currentData
+                                                    .invoiceId);
+                                          }
+                                          // If all individual checkboxes are selected, update the selectAll status
+                                          selectAll = selectedOrderIds
+                                              .length ==
+                                              _searchResult.length;
+                                        });
+                                      },
                                     ),
-                                    Row(
+                                    Column(
+                                      mainAxisAlignment:
+                                      MainAxisAlignment.start,
                                       crossAxisAlignment:
                                       CrossAxisAlignment.start,
-                                      mainAxisAlignment:
-                                      MainAxisAlignment
-                                          .spaceBetween,
                                       children: [
-                                        Column(
+                                        Row(
                                           crossAxisAlignment:
                                           CrossAxisAlignment
-                                              .start,
+                                              .center,
                                           mainAxisAlignment:
-                                          MainAxisAlignment.start,
+                                          MainAxisAlignment
+                                              .spaceBetween,
                                           children: [
-                                            Text(
-                                                "Inv ${_searchResult[index].invoiceNumber}"),
-                                            Text(_searchResult[index]
-                                                .customer
-                                                .address),
-                                            Text(
-                                              "Due Amount: ${_searchResult[index].total.toStringAsFixed(0) ?? 0}",
-                                              textAlign:
-                                              TextAlign.left,
-                                            ),
-                                          ],
-                                        ),
-                                        Column(
-                                          children: [
-                                            CircleAvatar(
-                                              backgroundColor:
-                                              Colors.blue,
-                                              child: IconButton(
-                                                padding:
-                                                const EdgeInsets
-                                                    .all(0),
-                                                onPressed: () async {
-                                                  AlertDialog alert =
-                                                  AlertDialog(
-                                                    title: const Text(
-                                                        'Are you sure?'),
-                                                    content: const Text(
-                                                        'By clicking this button, this invoice will be redirect to editing'),
-                                                    actions: <Widget>[
-                                                      TextButton(
-                                                        child:
-                                                        const Text(
-                                                            'Yes'),
-                                                        onPressed:
-                                                            () {
-                                                          Navigator
-                                                              .push(
-                                                            context,
-                                                            MaterialPageRoute(
-                                                              builder:
-                                                                  (context) =>
-                                                                  ReSelectProductsScreen(myData: _searchResult[index]),
-                                                            ),
-                                                          );
-                                                        },
-                                                      ),
-                                                      TextButton(
-                                                        child: const Text(
-                                                            'Cancel'),
-                                                        onPressed:
-                                                            () {
-                                                          Navigator.of(
-                                                              context)
-                                                              .pop();
-                                                        },
-                                                      ),
-                                                    ],
-                                                  );
-                                                  showDialog(
-                                                    context: context,
-                                                    builder:
-                                                        (BuildContext
-                                                    context) {
-                                                      return alert;
-                                                    },
-                                                  );
-                                                },
-                                                icon: const Icon(
-                                                  Icons.edit,
-                                                  color: Colors.white,
+                                            Column(
+                                              crossAxisAlignment:
+                                              CrossAxisAlignment
+                                                  .start,
+                                              mainAxisAlignment:
+                                              MainAxisAlignment
+                                                  .start,
+                                              children: [
+                                                SizedBox(
+                                                  width: MediaQuery.of(
+                                                      context)
+                                                      .size
+                                                      .width *
+                                                      0.7,
+                                                  child: Text(
+                                                    _searchResult[
+                                                    index]
+                                                        .customer
+                                                        .name,
+                                                    softWrap: true,
+                                                    style: TextStyle(
+                                                        fontWeight: FontWeight.bold
+                                                    ),),
                                                 ),
-                                              ),
-                                            ),
-                                            const SizedBox(
-                                              height: 6,
-                                            ),
-                                            CircleAvatar(
-                                              backgroundColor:
-                                              Colors.red,
-                                              child: IconButton(
-                                                padding:
-                                                const EdgeInsets
-                                                    .all(0),
-                                                onPressed: () async {
-                                                  AlertDialog alert =
-                                                  AlertDialog(
-                                                    title: const Text(
-                                                        'Are you sure?'),
-                                                    content: const Text(
-                                                        'By clicking this button, this invoice will be deleted'),
-                                                    actions: <Widget>[
-                                                      TextButton(
-                                                        child:
-                                                        const Text(
-                                                            'Yes'),
-                                                        onPressed:
-                                                            () {
-                                                          Navigator.of(
-                                                              context)
-                                                              .pop();
-                                                          deleteMyDataSearch(
-                                                              _searchResult[
-                                                              index]);
-                                                        },
-                                                      ),
-                                                      TextButton(
-                                                        child: const Text(
-                                                            'Cancel'),
-                                                        onPressed:
-                                                            () {
-                                                          Navigator.of(
-                                                              context)
-                                                              .pop();
-                                                        },
-                                                      ),
-                                                    ],
-                                                  );
-                                                  showDialog(
-                                                    context: context,
-                                                    builder:
-                                                        (BuildContext
-                                                    context) {
-                                                      return alert;
-                                                    },
-                                                  );
-                                                },
-                                                icon: const Icon(
-                                                  Icons.delete,
-                                                  color: Colors.white,
+                                                Row(
+                                                  children: [
+                                                    Text(
+                                                      "Inv# ${_searchResult[index].invoiceNumber}   (${_searchResult[index].products.length})    ",
+                                                    ),
+                                                    Text("Total Amount: ${_searchResult[index].total.toStringAsFixed(2) ?? 0}")
+                                                  ],
                                                 ),
-                                              ),
+                                                Text('Remarks : ${_searchResult[index].remarks}'),
+                                                const SizedBox(
+                                                  height: 5,
+                                                ),
+                                              ],
                                             ),
                                           ],
                                         ),
                                       ],
                                     ),
-                                    Container(
-                                        margin: const EdgeInsets.only(
-                                            top: 5),
-                                        padding: const EdgeInsets
-                                            .symmetric(
-                                            horizontal: 6,
-                                            vertical: 3),
-                                        decoration:
-                                        const BoxDecoration(
-                                            borderRadius:
-                                            BorderRadius.all(
-                                                Radius
-                                                    .circular(
-                                                    4)),
-                                            color: Colors.amber),
-                                        child: Text(
-                                            _searchResult[index]
-                                                .date)),
                                   ],
                                 ),
                               ),
@@ -837,28 +868,6 @@ class _InvoiceListScreenState extends State<InvoiceListScreen> with RouteAware {
                                               MainAxisAlignment
                                                   .start,
                                               children: [
-                                                Row(
-                                                  children: [
-                                                    Text(
-                                                      "Inv# ${myDataList[index].invoiceNumber}   (${myDataList[index].products.length})    ",
-                                                      style: const TextStyle(
-                                                          fontWeight:
-                                                          FontWeight
-                                                              .bold),
-                                                    ),
-                                                    Text(
-                                                      myDataList[
-                                                      index]
-                                                          .date,
-                                                      style: TextStyle(
-                                                          fontSize:
-                                                          10),
-                                                    )
-                                                  ],
-                                                ),
-                                                const SizedBox(
-                                                  height: 5,
-                                                ),
                                                 SizedBox(
                                                   width: MediaQuery.of(
                                                       context)
@@ -870,21 +879,20 @@ class _InvoiceListScreenState extends State<InvoiceListScreen> with RouteAware {
                                                       index]
                                                           .customer
                                                           .name,
-                                                      softWrap: true),
+                                                      softWrap: true,
+                                                  style: TextStyle(
+                                                    fontWeight: FontWeight.bold
+                                                  ),),
                                                 ),
-                                                SizedBox(
-                                                  width: MediaQuery.of(
-                                                      context)
-                                                      .size
-                                                      .width *
-                                                      0.7,
-                                                  child: Text(
-                                                    "Total Amount: ${myDataList[index].total.toStringAsFixed(2) ?? 0}",
-                                                    textAlign:
-                                                    TextAlign
-                                                        .left,
-                                                  ),
+                                                Row(
+                                                  children: [
+                                                    Text(
+                                                      "Inv# ${myDataList[index].invoiceNumber}   (${myDataList[index].products.length})    ",
+                                                    ),
+                                                    Text("Total Amount: ${myDataList[index].total.toStringAsFixed(2) ?? 0}")
+                                                  ],
                                                 ),
+                                                Text('Remarks : ${myDataList[index].remarks}'),
                                                 const SizedBox(
                                                   height: 5,
                                                 ),

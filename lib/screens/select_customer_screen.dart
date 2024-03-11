@@ -51,7 +51,7 @@ class _SelectCustomerScreenState extends State<SelectCustomerScreen> {
   var total = 2122;
 
   Future<List<Account>> fetchItems(int offset, int limit) async {
-    List<Account> fetchd = [];
+    List<Account> fetched = [];
     setState(() {
       isLoaded = true;
     });
@@ -59,31 +59,35 @@ class _SelectCustomerScreenState extends State<SelectCustomerScreen> {
     Database database = await openDatabase(path);
     int? count = controller.text.isNotEmpty
         ? Sqflite.firstIntValue(await database.rawQuery(
-        "SELECT * FROM account WHERE areacd=${widget.areaId.areaCd} and name LIKE '%${controller.text}%'"))
+        "SELECT COUNT(*) FROM account WHERE areacd=${widget.areaId.areaCd} and name LIKE '%${controller.text}%'"))
         : Sqflite.firstIntValue(await database.rawQuery(
-        "SELECT * FROM account where areacd=${widget.areaId.areaCd}"));
+        "SELECT COUNT(*) FROM account where areacd=${widget.areaId.areaCd}"));
     List<Map<String, dynamic>> parties = controller.text.isNotEmpty
         ? await database.rawQuery(
-        "SELECT * FROM account WHERE areacd=${widget.areaId.areaCd} and name LIKE '%${controller.text}%' LIMIT $limit OFFSET $offset")
+        "SELECT * FROM account WHERE areacd=${widget.areaId.areaCd} and name LIKE '%${controller.text}%' ORDER BY name LIMIT $limit OFFSET $offset")
         : await database.rawQuery(
-        "SELECT * FROM account where areacd=${widget.areaId.areaCd} LIMIT $limit OFFSET $offset");
+        "SELECT * FROM account where areacd=${widget.areaId.areaCd} ORDER BY name LIMIT $limit OFFSET $offset");
     database.close();
 
     for (var customer in parties) {
       debugPrint(customer["name"]);
       final code = customer['code']; // Extract the code
-      final isCodePresent = await _isCodePresentInLocalDB(code.toString());
-      fetchd.add(Account(
-          id: customer['ID'],
-          name: customer['name'],
-          address: "${customer['address']}",
-          code: customer['code'],
-          distCode: customer['dist_code'],
-          areaCd: customer['areacd'],
-          active: customer['active'],
-        cardColor: isCodePresent ? Colors.green : null,
-      ),
-      );
+      final hasZeroOrder = await _hasZeroOrderAmountInLocalDB(code);
+      final hasNonZeroOrder = await _hasNonZeroOrderAmountInLocalDB(code);
+      fetched.add(Account(
+        id: customer['ID'],
+        name: customer['name'],
+        address: "${customer['address']}",
+        code: customer['code'],
+        distCode: customer['dist_code'],
+        areaCd: customer['areacd'],
+        active: customer['active'],
+        cardColor: hasZeroOrder && hasNonZeroOrder
+            ? Colors.grey
+            : (hasZeroOrder
+            ? Colors.red
+            : (hasNonZeroOrder ? Colors.green : null)),
+      ));
     }
     if (parties.length <= count!) {
       isLoaded = false;
@@ -91,7 +95,7 @@ class _SelectCustomerScreenState extends State<SelectCustomerScreen> {
 
     await Future.delayed(const Duration(milliseconds: 500));
 
-    return fetchd;
+    return fetched;
   }
 
   initial() async {
@@ -133,6 +137,39 @@ class _SelectCustomerScreenState extends State<SelectCustomerScreen> {
     _scrollController.dispose();
     super.dispose();
   }
+  Future<bool> _hasZeroOrderAmountInLocalDB(int code) async {
+    final databasePath = await getDatabasesPath();
+    final database = await openDatabase(join(databasePath, 'eOrderBook.db'));
+
+    // Check if there is at least one order with orderAmount = 0
+    final hasZeroOrder = await database.query(
+      'eorderbook_master',
+      where: 'code = ? AND order_amount = 0',
+      whereArgs: [code],
+    );
+
+    database.close();
+
+    return hasZeroOrder.isNotEmpty;
+  }
+
+  Future<bool> _hasNonZeroOrderAmountInLocalDB(int code) async {
+    final databasePath = await getDatabasesPath();
+    final database = await openDatabase(join(databasePath, 'eOrderBook.db'));
+
+    // Check if there is at least one order with orderAmount > 0
+    final hasNonZeroOrder = await database.query(
+      'eorderbook_master',
+      where: 'code = ? AND order_amount > 0',
+      whereArgs: [code],
+    );
+
+    database.close();
+
+    return hasNonZeroOrder.isNotEmpty;
+  }
+
+
   Future<bool> _isCodePresentInLocalDB(String code) async {
     final databasePath = await getDatabasesPath();
     final database = await openDatabase(join(databasePath, 'eOrderBook.db'));
@@ -165,10 +202,11 @@ class _SelectCustomerScreenState extends State<SelectCustomerScreen> {
         title: Column(
           children: [
             const Text("Select Customer",style: TextStyle(
-              fontSize: 24
+              fontSize: 20
             ),),
             Text(widget.areaId.name,style: TextStyle(
-              fontSize: 16
+              fontSize: 20,
+              fontWeight: FontWeight.bold
             ),)
           ],
         ),
@@ -306,9 +344,9 @@ class _SelectCustomerScreenState extends State<SelectCustomerScreen> {
                             }
                           },
                           child: Card(
+                            color: _searchResult[index].cardColor,
                             child: Padding(
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 16.0, vertical: 8),
+                              padding: const EdgeInsets.only(left: 16),
                               child: Row(
                                 children: [
                                   Expanded(
@@ -326,8 +364,8 @@ class _SelectCustomerScreenState extends State<SelectCustomerScreen> {
                                               fontWeight:
                                               FontWeight.bold),
                                         ),
-                                        Text(
-                                            "Area: ${widget.areaId.name}"),
+                                        Text(_searchResult[index].address),
+
                                       ],
                                     ),
                                   ),
@@ -436,8 +474,7 @@ class _SelectCustomerScreenState extends State<SelectCustomerScreen> {
                                               fontWeight:
                                               FontWeight.bold),
                                         ),
-                                        Text(
-                                            "Address : ${items[index].address}"),
+                                        Text(items[index].address),
                                       ],
                                     ),
                                   ),

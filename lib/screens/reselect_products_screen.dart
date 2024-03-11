@@ -10,6 +10,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:path/path.dart' as path;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sqflite/sqflite.dart';
@@ -26,7 +27,7 @@ class ReSelectProductsScreen extends StatefulWidget {
 
 class _ReSelectProductsScreenState extends State<ReSelectProductsScreen> {
   bool allSelected = false;
-
+  bool isButtonVisible = true;
   bool visibility = true;
   final ScrollController _scrollController = ScrollController();
   List<Product> items = [];
@@ -329,8 +330,8 @@ class _ReSelectProductsScreenState extends State<ReSelectProductsScreen> {
   bool showPositiveBalanceOnly = false;
   bool searchFromStart = false;
   bool searchRefresh = true;
-  bool searchThreeDigit = false;
-
+  // bool searchThreeDigit = false;
+  bool searchOnTap = false;
 
   Future<void> loadPreferences() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
@@ -339,7 +340,8 @@ class _ReSelectProductsScreenState extends State<ReSelectProductsScreen> {
       showPositiveBalanceOnly = prefs.getBool('showPositiveBalanceOnly') ?? false;
       searchFromStart = prefs.getBool('searchFromStart') ?? false;
       searchRefresh = prefs.getBool('searchRefresh') ?? false;
-      searchThreeDigit = prefs.getBool('searchThreeDigit') ?? false;
+      // searchThreeDigit = prefs.getBool('searchThreeDigit') ?? false;
+      searchOnTap = prefs.getBool('searchOnTap') ?? false;
     });
   }
 
@@ -349,9 +351,53 @@ class _ReSelectProductsScreenState extends State<ReSelectProductsScreen> {
     prefs.setBool('showPositiveBalanceOnly', showPositiveBalanceOnly);
     prefs.setBool('searchFromStart', searchFromStart);
     prefs.setBool('searchRefresh', searchRefresh);
-    prefs.setBool('searchThreeDigit', searchThreeDigit);
+    // prefs.setBool('searchThreeDigit', searchThreeDigit);
+    prefs.setBool('searchOnTap', searchOnTap);
   }
+  Future<Position> _getCurrentLocation() async {
+    try {
+      Position position = await Geolocator.getCurrentPosition(
+        desiredAccuracy: LocationAccuracy.high,
+      );
 
+      return Position(
+        latitude: position.latitude,
+        longitude: position.longitude,
+        timestamp: position.timestamp ?? DateTime.now(),
+        accuracy: position.accuracy ?? 0.0,
+        altitude: position.altitude ?? 0.0,
+        altitudeAccuracy: position.altitudeAccuracy ?? 0.0,
+        heading: position.heading ?? 0.0,
+        headingAccuracy: position.headingAccuracy ?? 0.0,
+        speed: position.speed ?? 0.0,
+        speedAccuracy: position.speedAccuracy ?? 0.0,
+        floor: position.floor ?? 0,
+        isMocked: position.isMocked ?? false,
+      );
+    } catch (e) {
+      // Handle exceptions (e.g., location services disabled)
+      print("Error getting location: $e");
+      return Position(
+        latitude: 0.0,
+        longitude: 0.0,
+        timestamp: DateTime.now(),
+        accuracy: 0.0,
+        altitude: 0.0,
+        altitudeAccuracy: 0.0,
+        heading: 0.0,
+        headingAccuracy: 0.0,
+        speed: 0.0,
+        speedAccuracy: 0.0,
+        floor: 0,
+        isMocked: false,
+      );
+    }
+  }
+  List<String> options = [
+    "No Order",
+    "Shop Closed",
+    "Other"
+  ];
   void _appNotification() {
     showModalBottomSheet(
       context: context,
@@ -391,6 +437,7 @@ class _ReSelectProductsScreenState extends State<ReSelectProductsScreen> {
                       stateSetter(() {
                         showSelected = value;
                         savePreferences();
+                        setState(() {});
                       });
                     },
                   ),
@@ -404,6 +451,7 @@ class _ReSelectProductsScreenState extends State<ReSelectProductsScreen> {
                       stateSetter(() {
                         showPositiveBalanceOnly = value;
                         savePreferences();
+                        setState(() {});
                       });
                     },
                   ),
@@ -417,6 +465,7 @@ class _ReSelectProductsScreenState extends State<ReSelectProductsScreen> {
                       stateSetter(() {
                         searchFromStart = value;
                         savePreferences();
+                        setState(() {});
                       });
                     },
                   ),
@@ -430,19 +479,20 @@ class _ReSelectProductsScreenState extends State<ReSelectProductsScreen> {
                       stateSetter(() {
                         searchRefresh = value;
                         savePreferences();
+                        setState(() {});
                       });
                     },
                   ),
-                ),
-                Divider(),
+                ),  Divider(),
                 ListTile(
-                  title: Text('Search From 3 Digits'),
+                  title: Text('Search by Button'),
                   trailing: CupertinoSwitch(
-                    value: searchThreeDigit,
+                    value: searchOnTap,
                     onChanged: (value) {
                       stateSetter(() {
-                        searchThreeDigit = value;
+                        searchOnTap = value;
                         savePreferences();
+                        setState(() {});
                       });
                     },
                   ),
@@ -459,411 +509,646 @@ class _ReSelectProductsScreenState extends State<ReSelectProductsScreen> {
   @override
   Widget build(BuildContext context) {
     // final _items = CryptoModel.getCrypto();
-    return Scaffold(
-      appBar: AppBar(
-        elevation: 0,
-        centerTitle: true,
-        title: Column(
-          children: [
-            SingleChildScrollView(
+    return WillPopScope(
+      onWillPop: () async{
+        return false;
+      },
+      child: Scaffold(
+        appBar: AppBar(
+          elevation: 0,
+          centerTitle: true,
+          title: Column(
+            children: [
+              SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: Text(
+                    widget.myData.customer.name,
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                  )),
+              SingleChildScrollView(
                 scrollDirection: Axis.horizontal,
                 child: Text(
-                  widget.myData.customer.name,
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                )),
-            SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              child: Text(
-                '(Total : ${totalPrice})',
-                style: TextStyle(fontSize: 16),
-              ),
-            )
+                  '(Total : ${totalPrice})',
+                  style: TextStyle(fontSize: 16),
+                ),
+              )
+            ],
+          ),
+            leading: IconButton(onPressed: () async {
+              bool confirmCancelOrder = await showDialog(
+                context: context,
+                builder: (context) {
+                  return AlertDialog(
+                    title: Text("Cancel Order",textAlign: TextAlign.center),
+                    content: Text("Do you want to cancel the order?"),
+                    actions: [
+                      Row(
+                        children: [
+                          ElevatedButton(
+                            onPressed: () {
+                              Navigator.pop(context, false); // User selected No
+                            },
+                            child: Text("No"),
+                          ),
+                          ElevatedButton(
+                            onPressed: () {
+                              Navigator.pop(context, true); // User selected Yes
+                            },
+                            child: Text("Yes"),
+                          ),
+                        ],
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      )
+                    ],
+                  );
+                },
+              );
+              if(confirmCancelOrder != null && confirmCancelOrder) {
+                Navigator.pushAndRemoveUntil(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) =>
+                        InvoiceListScreen(),
+                  ),
+                      (Route<dynamic> route) => false,
+                );
+              }
+            }, icon: Icon(Icons.cancel_outlined,color: Colors.red,)),
+
+          actions: [
+            items.isNotEmpty || getSelectedItem().isNotEmpty
+                ? Visibility(
+              visible: isButtonVisible,
+                  child: IconButton(
+                      onPressed: () async {
+                        if (getSelectedItem().isNotEmpty) {
+                          await DatabaseHelper.instance.updateInvoice(
+                              widget.myData.invoiceId, selectedProducts);
+
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const InvoiceListScreen(),
+                            ),
+                          );
+                        } else {
+                          Fluttertoast.showToast(
+                            msg: "Please select a product",
+                            toastLength: Toast.LENGTH_SHORT,
+                            gravity: ToastGravity.BOTTOM,
+                            timeInSecForIosWeb: 1,
+                            backgroundColor: Colors.grey[600],
+                            textColor: Colors.white,
+                            fontSize: 16.0,
+                          );
+                        }
+                      },
+                      icon : Visibility(
+                          visible: visibility, child: Icon(Icons.check_circle_outline,color: Colors.green,))),
+                )
+                : const SizedBox()
           ],
         ),
-        leading: IconButton(onPressed: () {
-          _appNotification();
-        } , icon: Icon(Icons.settings)),
-        actions: [
-          items.isNotEmpty || getSelectedItem().isNotEmpty
-              ? ElevatedButton(
-                  onPressed: () async {
-                    if (getSelectedItem().isNotEmpty) {
-                      await DatabaseHelper.instance.updateInvoice(
-                          widget.myData.invoiceId, selectedProducts);
-
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const InvoiceListScreen(),
-                        ),
-                      );
-                    } else {
-                      Fluttertoast.showToast(
-                        msg: "Please select a product",
-                        toastLength: Toast.LENGTH_SHORT,
-                        gravity: ToastGravity.BOTTOM,
-                        timeInSecForIosWeb: 1,
-                        backgroundColor: Colors.grey[600],
-                        textColor: Colors.white,
-                        fontSize: 16.0,
-                      );
-                    }
-                  },
-                  child: Visibility(
-                      visible: visibility, child: const Text("Save")))
-              : const SizedBox()
-        ],
-      ),
-      body: Stack(
-        children: [
-          GestureDetector(
-            onTap: () => FocusManager.instance.primaryFocus?.unfocus(),
-            child: ListView(
-              controller: _scrollController,
-              children: [
-                Visibility(
-                  visible: visibility,
-                  child: items.isNotEmpty
-                      ? Column(
-                          children: [
-                            Container(
-                              margin: const EdgeInsets.all(4),
-                              decoration: BoxDecoration(
-                                  borderRadius: BorderRadius.circular(4),
-                                  border:
-                                      Border.all(color: Colors.green)),
-                              child: ListTile(
-                                contentPadding:
-                                    const EdgeInsets.only(left: 6, right: 0),
-                                leading: const Icon(Icons.search),
-                                title: TextField(
-                                  controller: controller,
-                                  decoration: const InputDecoration(
-                                      hintText: 'Search',
-                                      border: InputBorder.none),
-                                  textInputAction: TextInputAction.search,
-                                  onChanged: (value) {
-                                    if (_debounce?.isActive ?? false) _debounce!.cancel();
-                                    _debounce = Timer(const Duration(milliseconds: 500), () {
-                                      final hasMinLength = value.length >= 3;
-                                      if (searchThreeDigit || hasMinLength) {
-                                        onSearchTextChanged(value);
-                                        setState(() {});
-                                        searchFromStart ? initialStart() : initial();
-                                      } else {
-                                        onSearchTextChanged(value);
-                                        setState(() {});
-                                        searchFromStart ? initialStart() : initial();
+        body: Stack(
+          children: [
+            GestureDetector(
+              onTap: () => FocusManager.instance.primaryFocus?.unfocus(),
+              child: ListView(
+                controller: _scrollController,
+                children: [
+                  Visibility(
+                    visible: visibility,
+                    child: items.isNotEmpty
+                        ? Column(
+                            children: [
+                              Container(
+                                margin: const EdgeInsets.all(4),
+                                decoration: BoxDecoration(
+                                    borderRadius: BorderRadius.circular(4),
+                                    border:
+                                        Border.all(color: Colors.green)),
+                                child: ListTile(
+                                  contentPadding:
+                                      const EdgeInsets.only(left: 6, right: 0),
+                                  leading: const Icon(Icons.search),
+                                  title: TextField(
+                                    controller: controller,
+                                    decoration: const InputDecoration(
+                                        hintText: 'Search',
+                                        border: InputBorder.none),
+                                    textInputAction: TextInputAction.search,
+                                    onChanged: (value) {
+                                      if(!searchOnTap){
+                                        if (_debounce?.isActive ?? false) _debounce!.cancel();
+                                        _debounce = Timer(const Duration(milliseconds: 500), () {
+                                          onSearchTextChanged(value);
+                                          setState(() {});
+                                          searchFromStart ? initialStart() : initial();
+                                        });
                                       }
-                                    });
-                                  }, // onChanged: onSearchTextChanged,
-                                ),
-                                trailing: SizedBox(
-                                  width: 40,
-                                  child: InkWell(
-                                    child: const Icon(
-                                      Icons.cancel,
-                                      size: 28,
+                                    },// onChanged: onSearchTextChanged,
+                                  ),
+                                  trailing: SizedBox(
+                                    width: 40,
+                                    child: InkWell(
+                                      child: const Icon(
+                                        Icons.cancel,
+                                        size: 28,
+                                      ),
+                                      onTap: () {
+                                        controller.clear();
+                                        onSearchTextChanged('');
+                                        FocusManager.instance.primaryFocus
+                                            ?.hasPrimaryFocus;
+                                      },
                                     ),
-                                    onTap: () {
-                                      controller.clear();
-                                      onSearchTextChanged('');
-                                      FocusManager.instance.primaryFocus
-                                          ?.hasPrimaryFocus;
-                                    },
                                   ),
                                 ),
                               ),
-                            ),
 
-                            _searchResult.isNotEmpty ||
-                                controller.text.isNotEmpty
-                                ? Column(
-                              children: [
-                                ListView.builder(
-                                  itemBuilder: (context, index) {
-                                    if (!showPositiveBalanceOnly ||
-                                        (_searchResult[index].balance > 0)) {
-                                      return InkWell(
-                                        onTap: () async {
-                                          if (!_searchResult[index]
-                                              .selected) {
-                                            showEditProductDialog(
-                                                context,
-                                                _searchResult[index],
-                                                index);
-                                          }
-                                        },
-                                        child: Card(
-                                          margin:
-                                          const EdgeInsets.symmetric(
-                                              vertical: 3,
-                                              horizontal: 6),
-                                          child: ListTile(
-                                            // contentPadding: const EdgeInsets.all(12),
-                                            selected: _searchResult[index]
-                                                .selected,
-                                            selectedTileColor:
-                                            Colors.green,
-                                            selectedColor: Colors.white,
-                                            title: Row(
-                                              mainAxisSize:
-                                              MainAxisSize.max,
-                                              mainAxisAlignment:
-                                              MainAxisAlignment.start,
-                                              crossAxisAlignment:
-                                              CrossAxisAlignment.center,
-                                              children: [
-                                                Expanded(
-                                                  child: Column(
-                                                    mainAxisAlignment:
-                                                    MainAxisAlignment
-                                                        .spaceBetween,
-                                                    crossAxisAlignment:
-                                                    CrossAxisAlignment
-                                                        .start,
-                                                    children: [
-                                                      Row(
-                                                        children: [
-                                                          Expanded(
-                                                            child: Text(
-                                                              "${_searchResult[
-                                                              index]
-                                                                  .name} ${_searchResult[
-                                                              index]
-                                                                  .pCode}",
-                                                              style: const TextStyle(
-                                                                  fontSize:
-                                                                  15),
+                              _searchResult.isNotEmpty ||
+                                  controller.text.isNotEmpty
+                                  ? Column(
+                                children: [
+                                  ListView.builder(
+                                    itemBuilder: (context, index) {
+                                      if (!showPositiveBalanceOnly ||
+                                          (_searchResult[index].balance > 0)) {
+                                        return InkWell(
+                                          onTap: () async {
+                                            if (!_searchResult[index]
+                                                .selected) {
+                                              showEditProductDialog(
+                                                  context,
+                                                  _searchResult[index],
+                                                  index);
+                                            }
+                                          },
+                                          child:  Card(
+                                            color: _searchResult[index]
+                                                .selected ? Colors.green : Colors.white,
+                                            child: Padding(
+                                              padding: EdgeInsets.only(left: 16),
+                                              child: Row(
+                                                mainAxisAlignment:
+                                                MainAxisAlignment.end,
+                                                crossAxisAlignment:
+                                                CrossAxisAlignment.end,
+                                                children: [
+                                                  Expanded(
+                                                    child: Column(
+                                                      mainAxisAlignment:
+                                                      MainAxisAlignment.start,
+                                                      crossAxisAlignment:
+                                                      CrossAxisAlignment.start,
+                                                      children: [
+                                                        Row(
+                                                          children: [
+                                                            Expanded(
+                                                              child: Text(
+                                                                _searchResult[
+                                                                index]
+                                                                    .name +
+                                                                    "        " +
+                                                                    _searchResult[
+                                                                    index]
+                                                                        .pCode +
+                                                                    '(${_searchResult[index].balance})',
+                                                                style: const TextStyle(
+                                                                    fontSize:
+                                                                    13,
+                                                                    fontWeight:
+                                                                    FontWeight
+                                                                        .bold),
+                                                              ),
                                                             ),
-                                                          ),
-                                                          const SizedBox(
-                                                            width: 6,
-                                                          ),
-                                                          Text(
-                                                              "Balance: ${_searchResult[index]
-                                                                  .balance}"),
-                                                        ],
-                                                      ),
-                                                      Row(
-                                                        mainAxisAlignment:
-                                                        MainAxisAlignment
-                                                            .spaceBetween,
-                                                        crossAxisAlignment:
-                                                        CrossAxisAlignment
-                                                            .start,
-                                                        children: [
-                                                          Row(
-                                                            children: [
-                                                              const Text(
-                                                                'Price:',
-                                                                style: TextStyle(
-                                                                    fontSize:
-                                                                    13),
-                                                              ),
-                                                              Padding(
-                                                                padding: const EdgeInsets
-                                                                    .symmetric(
-                                                                    horizontal:
-                                                                    12.0,
-                                                                    vertical:
-                                                                    4),
-                                                                child:
+                                                          ],
+                                                        ),
+                                                        Row(
+                                                          mainAxisAlignment:
+                                                          MainAxisAlignment
+                                                              .spaceBetween,
+                                                          crossAxisAlignment:
+                                                          CrossAxisAlignment
+                                                              .start,
+                                                          children: [
+                                                            Row(
+                                                              children: [
+                                                                const Text(
+                                                                  'Price:',
+                                                                  style: TextStyle(
+                                                                      fontSize:
+                                                                      13),
+                                                                ),
                                                                 Text(
-                                                                  '${_searchResult[index]
-                                                                      .tp}',
+                                                                  '${_searchResult[index].tp}',
                                                                   style: const TextStyle(
                                                                       fontSize:
                                                                       13),
                                                                 ),
-                                                              ),
-                                                            ],
-                                                          ),
-                                                          Row(
-                                                            children: [
-                                                              const Text(
-                                                                'Disc:',
-                                                                style: TextStyle(
-                                                                    fontSize:
-                                                                    13),
-                                                              ),
-                                                              Padding(
-                                                                padding: const EdgeInsets
-                                                                    .symmetric(
-                                                                    horizontal:
-                                                                    12.0,
-                                                                    vertical:
-                                                                    4),
-                                                                child:
-                                                                Text(
-                                                                  '${_searchResult[index]
-                                                                      .discount}',
-                                                                  style: const TextStyle(
+                                                              ],
+                                                            ),
+                                                            Row(
+                                                              children: [
+                                                                const Text(
+                                                                  'Disc:',
+                                                                  style: TextStyle(
                                                                       fontSize:
                                                                       13),
                                                                 ),
-                                                              ),
-                                                            ],
-                                                          ),
-                                                          Row(
-                                                            children: [
-                                                              const Text(
-                                                                'Bns:',
-                                                                style: TextStyle(
-                                                                    fontSize:
-                                                                    13),
-                                                              ),
-                                                              Padding(
-                                                                padding: const EdgeInsets
-                                                                    .symmetric(
-                                                                    horizontal:
-                                                                    12.0,
-                                                                    vertical:
-                                                                    4),
-                                                                child:
-                                                                Text(
-                                                                  '${_searchResult[index]
-                                                                      .bonus}',
-                                                                  style: const TextStyle(
+                                                                Padding(
+                                                                  padding: const EdgeInsets
+                                                                      .symmetric(
+                                                                      horizontal:
+                                                                      12.0,
+                                                                      vertical:
+                                                                      4),
+                                                                  child:
+                                                                  Text(
+                                                                    '${_searchResult[index].discount}',
+                                                                    style: const TextStyle(
+                                                                        fontSize:
+                                                                        13),
+                                                                  ),
+                                                                ),
+                                                              ],
+                                                            ),
+                                                            Row(
+                                                              children: [
+                                                                const Text(
+                                                                  'Bns:',
+                                                                  style: TextStyle(
                                                                       fontSize:
                                                                       13),
                                                                 ),
-                                                              ),
-                                                            ],
-                                                          ),
-                                                          Row(
-                                                            children: [
-                                                              const Text(
-                                                                'Qty:',
-                                                                style: TextStyle(
-                                                                    fontSize:
-                                                                    13),
-                                                              ),
-                                                              Padding(
-                                                                padding: const EdgeInsets
-                                                                    .symmetric(
-                                                                    horizontal:
-                                                                    12.0,
-                                                                    vertical:
-                                                                    4),
-                                                                child:
-                                                                Text(
-                                                                  '${_searchResult[index]
-                                                                      .quantity}',
-                                                                  style: const TextStyle(
+                                                                Padding(
+                                                                  padding: const EdgeInsets
+                                                                      .symmetric(
+                                                                      horizontal:
+                                                                      12.0,
+                                                                      vertical:
+                                                                      4),
+                                                                  child:
+                                                                  Text(
+                                                                    '${_searchResult[index].bonus}',
+                                                                    style: const TextStyle(
+                                                                        fontSize:
+                                                                        13),
+                                                                  ),
+                                                                ),
+                                                              ],
+                                                            ),
+                                                            Row(
+                                                              children: [
+                                                                const Text(
+                                                                  'Qty:',
+                                                                  style: TextStyle(
                                                                       fontSize:
                                                                       13),
                                                                 ),
-                                                              ),
-                                                            ],
-                                                          ),
-                                                        ],
-                                                      ),
-                                                    ],
-                                                  ),
-                                                ),
-                                                const SizedBox(width: 10),
-                                                Column(
-                                                  children: [
-                                                    const SizedBox(
-                                                      height: 6,
+                                                                Padding(
+                                                                  padding: const EdgeInsets
+                                                                      .symmetric(
+                                                                      horizontal:
+                                                                      12.0,
+                                                                      vertical:
+                                                                      4),
+                                                                  child:
+                                                                  Text(
+                                                                    '${_searchResult[index].quantity}',
+                                                                    style: const TextStyle(
+                                                                        fontSize:
+                                                                        13),
+                                                                  ),
+                                                                ),
+                                                              ],
+                                                            ),
+                                                          ],
+                                                        ),
+                                                      ],
                                                     ),
-                                                    !_searchResult[index]
-                                                        .selected
-                                                        ? Container()
-                                                        : GestureDetector(
-                                                      onTap:
-                                                          () async {
-                                                        showSearchWarningAlert(
-                                                            context,
-                                                            index,
-                                                            0);
-                                                      },
-                                                      child: CircleAvatar(
+                                                  ),
+                                                  const SizedBox(width: 10),
+                                                  Column(
+                                                    children: [
+                                                      const SizedBox(
+                                                        height: 6,
+                                                      ),
+                                                      !_searchResult[index]
+                                                          .selected
+                                                          ? Container()
+                                                          : CircleAvatar(
                                                         maxRadius: 16,
                                                         backgroundColor:
                                                         Colors.red,
                                                         child:
-
-                                                        const Icon(
-                                                          Icons
-                                                              .remove,
-                                                          size: 18,
-                                                          color: Colors
-                                                              .white,
+                                                        GestureDetector(
+                                                          onTap:
+                                                              () async {
+                                                            showSearchWarningAlert(
+                                                                context,
+                                                                index,
+                                                                0);
+                                                          },
+                                                          child:
+                                                          const Icon(
+                                                            Icons
+                                                                .remove,
+                                                            size: 18,
+                                                            color: Colors
+                                                                .white,
+                                                          ),
                                                         ),
                                                       ),
-                                                    ),
-                                                    const SizedBox(
-                                                      height: 6,
-                                                    ),
-                                                  ],
-                                                )
-                                              ],
+                                                      const SizedBox(
+                                                        height: 6,
+                                                      ),
+                                                    ],
+                                                  )
+                                                ],
+                                              ),
                                             ),
                                           ),
-                                        ),
-                                      );
-                                    }
-
-                                  },
-                                  itemCount: _searchResult.isEmpty
-                                      ? 0
-                                      : _searchResult.length,
-                                  shrinkWrap: true,
-                                  physics: const ClampingScrollPhysics(),
-                                ),
-                              ],
-                            )
-                                : Container(),
-                            Visibility(
-                              visible:
-                                  selectedProducts.isNotEmpty && showSelected,
-                              child: Column(
-                                children: [
-                                  const Padding(
-                                    padding: EdgeInsets.all(12.0),
-                                    child: Text(
-                                      "Selected",
-                                      style: TextStyle(
-                                          fontSize: 18,
-                                          fontWeight: FontWeight.bold),
-                                    ),
-                                  ),
-                                  ListView.builder(
-                                    itemBuilder: (context, index) {
-                                      return productItem(
-                                          selectedProducts, index);
+                                        );
+                                      }else {
+                                        return Container();
+                                      }
                                     },
-                                    itemCount: selectedProducts.length,
+                                    itemCount: _searchResult.isEmpty
+                                        ? 0
+                                        : _searchResult.length,
                                     shrinkWrap: true,
                                     physics: const ClampingScrollPhysics(),
-                                  )
+                                  ),
+                                ],
+                              )
+                                  :Column(
+                                children: [
+                                  ListView.builder(
+                                    itemBuilder: (context, index) {
+                                      if (!showPositiveBalanceOnly ||
+                                          (items[index].balance > 0)) {
+                                        return InkWell(
+                                          onTap: () async {
+                                            if (!items[index]
+                                                .selected) {
+                                              showEditProductDialog(
+                                                  context,
+                                                  items[index],
+                                                  index);
+                                            }
+                                          },
+                                          child:  Card(
+                                            color: items[index]
+                                                .selected ? Colors.green : Colors.white,
+                                            child: Padding(
+                                              padding: EdgeInsets.only(left: 16),
+                                              child: Row(
+                                                mainAxisAlignment:
+                                                MainAxisAlignment.end,
+                                                crossAxisAlignment:
+                                                CrossAxisAlignment.end,
+                                                children: [
+                                                  Expanded(
+                                                    child: Column(
+                                                      mainAxisAlignment:
+                                                      MainAxisAlignment.start,
+                                                      crossAxisAlignment:
+                                                      CrossAxisAlignment.start,
+                                                      children: [
+                                                        Row(
+                                                          children: [
+                                                            Expanded(
+                                                              child: Text(
+                                                                items[
+                                                                index]
+                                                                    .name +
+                                                                    "        " +
+                                                                    items[
+                                                                    index]
+                                                                        .pCode +
+                                                                    '(${items[index].balance})',
+                                                                style: const TextStyle(
+                                                                    fontSize:
+                                                                    13,
+                                                                    fontWeight:
+                                                                    FontWeight
+                                                                        .bold),
+                                                              ),
+                                                            ),
+                                                          ],
+                                                        ),
+                                                        Row(
+                                                          mainAxisAlignment:
+                                                          MainAxisAlignment
+                                                              .spaceBetween,
+                                                          crossAxisAlignment:
+                                                          CrossAxisAlignment
+                                                              .start,
+                                                          children: [
+                                                            Row(
+                                                              children: [
+                                                                const Text(
+                                                                  'Price:',
+                                                                  style: TextStyle(
+                                                                      fontSize:
+                                                                      13),
+                                                                ),
+                                                                Text(
+                                                                  '${items[index].tp}',
+                                                                  style: const TextStyle(
+                                                                      fontSize:
+                                                                      13),
+                                                                ),
+                                                              ],
+                                                            ),
+                                                            Row(
+                                                              children: [
+                                                                const Text(
+                                                                  'Disc:',
+                                                                  style: TextStyle(
+                                                                      fontSize:
+                                                                      13),
+                                                                ),
+                                                                Padding(
+                                                                  padding: const EdgeInsets
+                                                                      .symmetric(
+                                                                      horizontal:
+                                                                      12.0,
+                                                                      vertical:
+                                                                      4),
+                                                                  child:
+                                                                  Text(
+                                                                    '${items[index].discount}',
+                                                                    style: const TextStyle(
+                                                                        fontSize:
+                                                                        13),
+                                                                  ),
+                                                                ),
+                                                              ],
+                                                            ),
+                                                            Row(
+                                                              children: [
+                                                                const Text(
+                                                                  'Bns:',
+                                                                  style: TextStyle(
+                                                                      fontSize:
+                                                                      13),
+                                                                ),
+                                                                Padding(
+                                                                  padding: const EdgeInsets
+                                                                      .symmetric(
+                                                                      horizontal:
+                                                                      12.0,
+                                                                      vertical:
+                                                                      4),
+                                                                  child:
+                                                                  Text(
+                                                                    '${items[index].bonus}',
+                                                                    style: const TextStyle(
+                                                                        fontSize:
+                                                                        13),
+                                                                  ),
+                                                                ),
+                                                              ],
+                                                            ),
+                                                            Row(
+                                                              children: [
+                                                                const Text(
+                                                                  'Qty:',
+                                                                  style: TextStyle(
+                                                                      fontSize:
+                                                                      13),
+                                                                ),
+                                                                Padding(
+                                                                  padding: const EdgeInsets
+                                                                      .symmetric(
+                                                                      horizontal:
+                                                                      12.0,
+                                                                      vertical:
+                                                                      4),
+                                                                  child:
+                                                                  Text(
+                                                                    '${items[index].quantity}',
+                                                                    style: const TextStyle(
+                                                                        fontSize:
+                                                                        13),
+                                                                  ),
+                                                                ),
+                                                              ],
+                                                            ),
+                                                          ],
+                                                        ),
+                                                      ],
+                                                    ),
+                                                  ),
+                                                  const SizedBox(width: 10),
+                                                  Column(
+                                                    children: [
+                                                      const SizedBox(
+                                                        height: 6,
+                                                      ),
+                                                      !items[index]
+                                                          .selected
+                                                          ? Container()
+                                                          : CircleAvatar(
+                                                        maxRadius: 16,
+                                                        backgroundColor:
+                                                        Colors.red,
+                                                        child:
+                                                        GestureDetector(
+                                                          onTap:
+                                                              () async {
+                                                            showSearchWarningAlert(
+                                                                context,
+                                                                index,
+                                                                0);
+                                                          },
+                                                          child:
+                                                          const Icon(
+                                                            Icons
+                                                                .remove,
+                                                            size: 18,
+                                                            color: Colors
+                                                                .white,
+                                                          ),
+                                                        ),
+                                                      ),
+                                                      const SizedBox(
+                                                        height: 6,
+                                                      ),
+                                                    ],
+                                                  )
+                                                ],
+                                              ),
+                                            ),
+                                          ),
+                                        );
+                                      }else {
+                                        return Container();
+                                      }
+                                    },
+                                    itemCount: items.isEmpty
+                                        ? 0
+                                        : items.length,
+                                    shrinkWrap: true,
+                                    physics: const ClampingScrollPhysics(),
+                                  ),
                                 ],
                               ),
-                            ),
-                            const SizedBox(
-                              height: 12,
-                            ),
-                            if (isLoading)
+                              Visibility(
+                                visible:
+                                selectedProducts.isNotEmpty && showSelected,
+                                child: Column(
+                                  children: [
+                                    const Padding(
+                                      padding: EdgeInsets.all(12.0),
+                                      child: Text(
+                                        "Selected",
+                                        style: TextStyle(
+                                            fontSize: 18,
+                                            fontWeight: FontWeight.bold),
+                                      ),
+                                    ),
+                                    ListView.builder(
+                                      itemBuilder: (context, index) {
+                                        return productItem(
+                                            selectedProducts, index);
+                                      },
+                                      itemCount: selectedProducts.length,
+                                      shrinkWrap: true,
+                                      physics: const ClampingScrollPhysics(),
+                                    )
+                                  ],
+                                ),
+                              ),
                               const SizedBox(
-                                  height: 30,
-                                  width: 30,
-                                  child: CircularProgressIndicator()),
-                            const SizedBox(
-                              height: 100,
-                            )
-                          ],
-                        )
-                      : ConstantWidget.NotFoundWidget(
-                          context, "Product not added yet"),
-                ),
-              ],
+                                height: 12,
+                              ),
+                              if (isLoading)
+                                const SizedBox(
+                                    height: 30,
+                                    width: 30,
+                                    child: CircularProgressIndicator()),
+                              const SizedBox(
+                                height: 100,
+                              )
+                            ],
+                          )
+                        : ConstantWidget.NotFoundWidget(
+                            context, "Product not added yet"),
+                  ),
+                ],
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
+        floatingActionButton: FloatingActionButton(
+            onPressed: () {
+              _appNotification();
+            },child: Icon(Icons.settings)),
+        resizeToAvoidBottomInset: false,
       ),
-      resizeToAvoidBottomInset: false,
     );
   }
 

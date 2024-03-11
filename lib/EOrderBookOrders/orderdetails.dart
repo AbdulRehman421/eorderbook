@@ -162,7 +162,15 @@ class _OrderDetailsState extends State<OrderDetails> {
 
 
   bool isLoading = false;
+  double calculateTotalOrderAmount() {
+    double totalAmount = 0.0;
 
+    for (var item in orderData) {
+      totalAmount += double.parse(item['order_amount']);
+    }
+
+    return totalAmount;
+  }
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -179,6 +187,14 @@ class _OrderDetailsState extends State<OrderDetails> {
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          if (!isLoading && orderData.isNotEmpty)
+          Center(child: Text('Order Amount : ${calculateTotalOrderAmount().toStringAsFixed(2)}',style: TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.bold
+          ),)),
+          SizedBox(
+            height: 10,
+          ),
           if (isLoading)
             Center(
               child: CircularProgressIndicator(),
@@ -191,27 +207,52 @@ class _OrderDetailsState extends State<OrderDetails> {
                   orderData.sort((a, b) => a['date'].compareTo(b['date']));
                   var item = orderData[index];
                   return Card(
-                    child: ListTile(
-                      leading: Text('${index + 1}',style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold
-                      ),),
-                      title: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.start,
+                      children: [
+                        SizedBox(
+                          width: 20,
+                        ),
+                      Text('${index + 1}',style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold
+                        ),),
+                        SizedBox(
+                          width: 20,
+                        ),
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
                           Text(item['name'],style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold
-                          ),),
-                          Text('${item['date']}(${item['order_amount']})'),
-                        ],
-                      ),
-                      subtitle: Text('${item['areaname']}(${item['areacd']})'),
-
-                      onTap: () {
-                        // Handle onTap if needed
-                      },
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold
+                                ),),
+                            Text('${item['areaname']}  (${item['order_amount']})'),
+                          ],
+                        )
+                      ],
                     ),
+                    // child: ListTile(
+                    //
+                    //   leading: Text('${index + 1}',style: TextStyle(
+                    //     fontSize: 20,
+                    //     fontWeight: FontWeight.bold
+                    //   ),),
+                    //   title: Column(
+                    //     crossAxisAlignment: CrossAxisAlignment.start,
+                    //     children: [
+                    //       Text(item['name'],style: TextStyle(
+                    //         fontSize: 16,
+                    //         fontWeight: FontWeight.bold
+                    //       ),),
+                    //     ],
+                    //   ),
+                    //   subtitle: Text('${item['areaname']}  (${item['order_amount']})'),
+                    //
+                    //   onTap: () {
+                    //     // Handle onTap if needed
+                    //   },
+                    // ),
                   );
                 },
               ),
