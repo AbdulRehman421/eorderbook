@@ -1,12 +1,16 @@
+import 'package:eorderbook/main.dart';
+
 class Distributor {
   int id;
   int distCode;
+  int mainCode;
   String name;
   int bonus;
 
   Distributor({
     required this.id,
     required this.distCode,
+    required this.mainCode,
     required this.name,
     required this.bonus,
   });
@@ -15,6 +19,7 @@ class Distributor {
     return {
       'ID': id,
       'dist_code': distCode,
+      'main_code': mainCode,
       'name': name,
       'bonus': bonus,
     };
@@ -24,6 +29,7 @@ class Distributor {
     return Distributor(
       id: map['ID'],
       distCode: map['dist_code'],
+      mainCode: map['main_code'],
       name: map['name'],
       bonus: map['bonus'],
     );
@@ -33,6 +39,7 @@ class Distributor {
     return Distributor(
       id: int.parse(json['ID']),
       distCode: int.parse(json['dist_code']),
+      mainCode: int.parse(json['main_code']),
       name: json['name'],
       bonus: int.parse(json['bonus']),
     );
@@ -42,6 +49,7 @@ class Distributor {
     return {
       'ID': id,
       'dist_code': distCode,
+      'main_code': mainCode,
       'name': name,
       'bonus': bonus,
     };

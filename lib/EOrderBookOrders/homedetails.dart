@@ -1,5 +1,5 @@
-import 'package:eorderbook/EOrderBookOrders/orderdetailbylogin.dart';
-import 'package:eorderbook/EOrderBookOrders/ordermapsbylogin.dart';
+import 'package:eorderbook/EOrderBookOrders/OrderDetailLogin/orderdetailbylogin.dart';
+import 'package:eorderbook/EOrderBookOrders/OrderDetailLogin/ordermapsbylogin.dart';
 import 'package:eorderbook/screens/login_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';

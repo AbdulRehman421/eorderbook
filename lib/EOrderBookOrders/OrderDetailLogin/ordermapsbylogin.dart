@@ -12,16 +12,18 @@ import 'package:path_provider/path_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sqflite/sqflite.dart';
 
-import '../models/user.dart';
-import '../services/distcodedb.dart';
+import '../../models/user.dart';
+import '../../services/distcodedb.dart';
 
 class OrderMapLogin extends StatefulWidget {
   String distcode;
   String username;
+  DateTime selectedDates;
   OrderMapLogin(
       {Key? key,
         required this.username,
         required this.distcode,
+        required this.selectedDates,
       })
       : super(key: key);
   @override
@@ -109,10 +111,7 @@ class _OrderMapLoginState extends State<OrderMapLogin> {
     _getDistCode();
     _refreshData();
     initializeDatabase();
-    getStoredDate().then((storedDate) {
-      DateTime finalDate = storedDate ?? selectedDate ?? DateTime.now();
-      fetchMarkers(widget.distcode, widget.username, finalDate);
-    });
+      fetchMarkers(widget.distcode, widget.username, widget.selectedDates);
     selectedDate = DateTime.now();
   }
   Future<DateTime?> getStoredDate() async {

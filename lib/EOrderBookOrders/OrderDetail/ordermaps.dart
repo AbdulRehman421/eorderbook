@@ -7,15 +7,17 @@
   import 'package:location/location.dart';
   import 'package:shared_preferences/shared_preferences.dart';
 
-  import '../services/distcodedb.dart';
+  import '../../services/distcodedb.dart';
 
   class OrderMap extends StatefulWidget {
 String distcode;
 String username;
+DateTime selectedDates;
    OrderMap(
       {Key? key,
         required this.username,
         required this.distcode,
+        required this.selectedDates,
       })
       : super(key: key);
 
@@ -35,10 +37,8 @@ String username;
     void initState() {
       super.initState();
       getCurrentLocation();
-      getStoredDate().then((storedDate) {
-        DateTime finalDate = storedDate ?? selectedDate ?? DateTime.now();
-        fetchMarkers(widget.distcode, widget.username, finalDate);
-      });
+        fetchMarkers(widget.distcode, widget.username, widget.selectedDates);
+
     }
 
     Future<DateTime?> getStoredDate() async {

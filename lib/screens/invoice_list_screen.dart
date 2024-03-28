@@ -1,6 +1,6 @@
 import 'package:connectivity_plus/connectivity_plus.dart';
-import 'package:eorderbook/EOrderBookOrders/orderdetails.dart';
-import 'package:eorderbook/EOrderBookOrders/ordermaps.dart';
+import 'package:eorderbook/EOrderBookOrders/OrderDetail/orderdetails.dart';
+import 'package:eorderbook/EOrderBookOrders/OrderDetail/ordermaps.dart';
 import 'package:eorderbook/models/InvoiceData.dart';
 import 'package:eorderbook/models/account.dart';
 import 'package:eorderbook/models/area.dart';
@@ -12,7 +12,6 @@ import 'package:eorderbook/screens/select_sector_and_area_screen.dart';
 import 'package:eorderbook/services/api_service.dart';
 import 'package:eorderbook/services/db_helper.dart';
 import 'package:eorderbook/utils/Utils.dart';
-import 'package:eorderbook/Utlis/invoice.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
@@ -164,9 +163,6 @@ class _InvoiceListScreenState extends State<InvoiceListScreen> with RouteAware {
 
   bool isLoading = false;
   bool isSelected = false;
-  double get totalAmountOfAllOrders {
-    return myDataList.map<double>((data) => data.total).reduce((a, b) => a + b);
-  }
   getData() async {
     var connectivityResult = await Connectivity().checkConnectivity();
     if (connectivityResult == ConnectivityResult.none) {
@@ -223,6 +219,10 @@ class _InvoiceListScreenState extends State<InvoiceListScreen> with RouteAware {
   }
   @override
   Widget build(BuildContext context) {
+    double totalSum = 0;
+    for (var data in myDataList) {
+      totalSum += Product.getTotal(data.products);
+    }
     return WillPopScope(
       onWillPop: () async {
         return false;
@@ -309,7 +309,16 @@ class _InvoiceListScreenState extends State<InvoiceListScreen> with RouteAware {
             PopupMenuButton<int>(
               onSelected: (int value) async {
                 if (value == 0) {
-                  getData();
+                  await Utils.showLoaderDialog(context ,"Checking Orders", "Please wait..." );
+                  var ordersCount = await DatabaseHelper.instance.getAllOrdersCount();
+                  Navigator.of(context).pop();
+                  if (ordersCount < 1) {
+
+                    await getData();
+                  }
+                  else {
+                    Utils.showToast("Please delete or send all orders");
+                  }
                 } else if (value == 1) {
                   bool confirmDelete =
                   await showDeleteConfirmationDialog(context);
@@ -404,14 +413,22 @@ class _InvoiceListScreenState extends State<InvoiceListScreen> with RouteAware {
               onPressed: () async {
                 bool confirmDelete = await showLogoutDialog(context);
                 if (confirmDelete) {
-                  SharedPreferences s = await SharedPreferences.getInstance();
-                  s.clear();
-                  Navigator.pushAndRemoveUntil(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const LoginScreen(),
-                      ),
-                          (route) => false);
+                  await Utils.showLoaderDialog(context ,"Checking Orders", "Please wait..." );
+                  var ordersCount = await DatabaseHelper.instance.getAllOrdersCount();
+                  Navigator.of(context).pop();
+                  if (ordersCount < 1) {
+                    SharedPreferences s = await SharedPreferences.getInstance();
+                    s.clear();
+                    Navigator.pushAndRemoveUntil(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const LoginScreen(),
+                        ),
+                            (route) => false);
+                  }
+                  else {
+                    Utils.showToast("Please delete or send all orders");
+                  }
                 } else {
                   // Cancel delete action
                 }
@@ -459,9 +476,9 @@ class _InvoiceListScreenState extends State<InvoiceListScreen> with RouteAware {
                     ? Card(
                       color: Colors.greenAccent,
                       child: Padding(
-                        padding: const EdgeInsets.only(right: 40,left: 40, top: 10,bottom: 10),
+                        padding: EdgeInsets.symmetric(horizontal: MediaQuery.of(context).size.width * 0.1, vertical: 10),
                         child: Text(
-                          'Order Amount: ${totalAmountOfAllOrders.toStringAsFixed(2)}',
+                          'Order Amount: ${totalSum.toStringAsFixed(2)}',
                           style: TextStyle(
                             fontSize: 20,
                             color: Colors.black, // Customize the color if needed
@@ -476,6 +493,7 @@ class _InvoiceListScreenState extends State<InvoiceListScreen> with RouteAware {
                         shrinkWrap: true,
                         physics: const ClampingScrollPhysics(),
                         itemBuilder: (contextb, index) {
+                          double total = Product.getTotal(myDataList[index].products);
                           MyData currentData = _searchResult[index];
                           bool isSelected = selectedOrderIds
                               .contains(currentData.invoiceId);
@@ -669,7 +687,7 @@ class _InvoiceListScreenState extends State<InvoiceListScreen> with RouteAware {
                                                     Text(
                                                       "Inv# ${_searchResult[index].invoiceNumber}   (${_searchResult[index].products.length})    ",
                                                     ),
-                                                    Text("Total Amount: ${_searchResult[index].total.toStringAsFixed(2) ?? 0}")
+                                                    Text("Total Amount: ${total.toStringAsFixed(2) ?? 0}")
                                                   ],
                                                 ),
                                                 Text('Remarks : ${_searchResult[index].remarks}'),
@@ -697,6 +715,7 @@ class _InvoiceListScreenState extends State<InvoiceListScreen> with RouteAware {
                         shrinkWrap: true,
                         physics: const ClampingScrollPhysics(),
                         itemBuilder: (contextb, index) {
+                          double total = Product.getTotal(myDataList[index].products);
                           MyData currentData = myDataList[index];
                           bool isSelected = selectedOrderIds
                               .contains(currentData.invoiceId);
@@ -807,108 +826,103 @@ class _InvoiceListScreenState extends State<InvoiceListScreen> with RouteAware {
                                     width: 5,
                                   ),
                                 ]),
-                            child: GestureDetector(
-                              onLongPress: () {
-                                Navigator.push(context, MaterialPageRoute(builder: (context) => MyPdfWidget(myData: myDataList[index]),));
-                              },
-                              child: Card(
-                                child: Padding(
-                                  padding: EdgeInsets.symmetric(
-                                      vertical: MediaQuery.devicePixelRatioOf(context), horizontal: MediaQuery.devicePixelRatioOf(context)),
-                                  child: Row(
-                                    children: [
-                                      // Checkbox(
-                                      //   value: isSelected,
-                                      //   onChanged: (value) {
-                                      //     setState(() {
-                                      //       if (value != null && value) {
-                                      //         selectedOrderIds.add(currentData.invoiceId);
-                                      //       } else {
-                                      //         selectedOrderIds.remove(currentData.invoiceId);
-                                      //       }
-                                      //     });
-                                      //   },
-                                      // ),
-                                      Checkbox(
-                                        value:
-                                        selectedOrderIds.contains(
-                                            currentData.invoiceId),
-                                        onChanged: (value) {
-                                          setState(() {
-                                            if (value!) {
-                                              selectedOrderIds.add(
-                                                  currentData
-                                                      .invoiceId);
-                                            } else {
-                                              selectedOrderIds.remove(
-                                                  currentData
-                                                      .invoiceId);
-                                            }
-                                            // If all individual checkboxes are selected, update the selectAll status
-                                            selectAll = selectedOrderIds
-                                                .length ==
-                                                myDataList.length;
-                                          });
-                                        },
-                                      ),
-                                      Column(
-                                        mainAxisAlignment:
-                                        MainAxisAlignment.start,
-                                        crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                        children: [
-                                          Row(
-                                            crossAxisAlignment:
-                                            CrossAxisAlignment
-                                                .center,
-                                            mainAxisAlignment:
-                                            MainAxisAlignment
-                                                .spaceBetween,
-                                            children: [
-                                              Column(
-                                                crossAxisAlignment:
-                                                CrossAxisAlignment
-                                                    .start,
-                                                mainAxisAlignment:
-                                                MainAxisAlignment
-                                                    .start,
-                                                children: [
-                                                  SizedBox(
-                                                    width: MediaQuery.of(
-                                                        context)
-                                                        .size
-                                                        .width *
-                                                        0.7,
-                                                    child: Text(
-                                                        myDataList[
-                                                        index]
-                                                            .customer
-                                                            .name,
-                                                        softWrap: true,
-                                                    style: TextStyle(
-                                                      fontWeight: FontWeight.bold
-                                                    ),),
-                                                  ),
-                                                  Row(
-                                                    children: [
-                                                      Text(
-                                                        "Inv# ${myDataList[index].invoiceNumber}   (${myDataList[index].products.length})    ",
-                                                      ),
-                                                      Text("Total Amount: ${myDataList[index].total.toStringAsFixed(2) ?? 0}")
-                                                    ],
-                                                  ),
-                                                  Text('Remarks : ${myDataList[index].remarks}'),
-                                                  const SizedBox(
-                                                    height: 5,
-                                                  ),
-                                                ],
-                                              ),
-                                            ],
-                                          ),
-                                        ],
-                                      ),
-                                    ],
-                                  ),
+                            child: Card(
+                              child: Padding(
+                                padding: EdgeInsets.symmetric(
+                                    vertical: MediaQuery.devicePixelRatioOf(context), horizontal: MediaQuery.devicePixelRatioOf(context)),
+                                child: Row(
+                                  children: [
+                                    // Checkbox(
+                                    //   value: isSelected,
+                                    //   onChanged: (value) {
+                                    //     setState(() {
+                                    //       if (value != null && value) {
+                                    //         selectedOrderIds.add(currentData.invoiceId);
+                                    //       } else {
+                                    //         selectedOrderIds.remove(currentData.invoiceId);
+                                    //       }
+                                    //     });
+                                    //   },
+                                    // ),
+                                    Checkbox(
+                                      value:
+                                      selectedOrderIds.contains(
+                                          currentData.invoiceId),
+                                      onChanged: (value) {
+                                        setState(() {
+                                          if (value!) {
+                                            selectedOrderIds.add(
+                                                currentData
+                                                    .invoiceId);
+                                          } else {
+                                            selectedOrderIds.remove(
+                                                currentData
+                                                    .invoiceId);
+                                          }
+                                          // If all individual checkboxes are selected, update the selectAll status
+                                          selectAll = selectedOrderIds
+                                              .length ==
+                                              myDataList.length;
+                                        });
+                                      },
+                                    ),
+                                    Column(
+                                      mainAxisAlignment:
+                                      MainAxisAlignment.start,
+                                      crossAxisAlignment:
+                                      CrossAxisAlignment.start,
+                                      children: [
+                                        Row(
+                                          crossAxisAlignment:
+                                          CrossAxisAlignment
+                                              .center,
+                                          mainAxisAlignment:
+                                          MainAxisAlignment
+                                              .spaceBetween,
+                                          children: [
+                                            Column(
+                                              crossAxisAlignment:
+                                              CrossAxisAlignment
+                                                  .start,
+                                              mainAxisAlignment:
+                                              MainAxisAlignment
+                                                  .start,
+                                              children: [
+                                                SizedBox(
+                                                  width: MediaQuery.of(
+                                                      context)
+                                                      .size
+                                                      .width *
+                                                      0.7,
+                                                  child: Text(
+                                                      myDataList[
+                                                      index]
+                                                          .customer
+                                                          .name,
+                                                      softWrap: true,
+                                                  style: TextStyle(
+                                                    fontWeight: FontWeight.bold
+                                                  ),),
+                                                ),
+                                                Row(
+                                                  children: [
+                                                    Text(
+                                                      "Inv# ${myDataList[index].invoiceNumber}   (${myDataList[index].products.length})    ",
+                                                    ),
+                                                    Text("Total Amount: ${total.toStringAsFixed(2) ?? 0}")
+                                                  ],
+                                                ),
+                                                Text('Remarks : ${myDataList[index].remarks}'),
+                                                const SizedBox(
+                                                  height: 5,
+                                                ),
+                                              ],
+                                            ),
+                                          ],
+                                        ),
+                                      ],
+                                    ),
+                                  ],
                                 ),
                               ),
                             ),

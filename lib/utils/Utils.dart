@@ -107,3 +107,15 @@ class Utils {
 
 }
 
+// Column(
+// crossAxisAlignment: CrossAxisAlignment.start,
+// children: [
+// Text("Total Order : ${item['orders']}",
+// style: TextStyle(
+// fontSize: 16,
+// fontWeight: FontWeight.bold
+// ),
+// ),
+// Text('Amount : ${item['amount']}  (${item['date']})'),
+// ],
+// )

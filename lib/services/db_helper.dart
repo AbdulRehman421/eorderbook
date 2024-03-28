@@ -19,10 +19,23 @@ class DatabaseHelper {
   DatabaseHelper._privateConstructor();
 
   Future<Database> get database async {
-    if (_database != null) return _database!;
-    _database = await _initDatabase();
-    return _database!;
+    if (_database != null && _database!.isOpen) {
+      return _database!;
+    } else {
+      _database = await _initDatabase();
+      return _database!;
+    }
   }
+
+  Future<Database> _initDatabase() async {
+    String path = join(await getDatabasesPath(), 'eOrderBook.db');
+    return await openDatabase(
+      path,
+      version: 1,
+      onCreate: _createTables,
+    );
+  }
+
   static Future<void> deleteAllData() async {
     // Get a reference to the database
     Database database = await instance.database;
@@ -46,14 +59,6 @@ class DatabaseHelper {
 
     // Close the database
     await database.close();
-  }
-  Future<Database> _initDatabase() async {
-    String path = join(await getDatabasesPath(), 'eOrderBook.db');
-    return await openDatabase(
-      path,
-      version: 1,
-      onCreate: _createTables,
-    );
   }
 
   Future<void> _createTables(Database db, int version) async {
@@ -96,6 +101,7 @@ class DatabaseHelper {
       CREATE TABLE IF NOT EXISTS distributor (
         ID INTEGER PRIMARY KEY,
         dist_code INTEGER NOT NULL,
+        main_code INTEGER NOT NULL,
         name TEXT NOT NULL,
         bonus INTEGER NOT NULL DEFAULT 1
       )

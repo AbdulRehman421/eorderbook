@@ -1,7 +1,7 @@
+import 'dart:convert';
+
 import 'package:connectivity_plus/connectivity_plus.dart';
-import 'package:eorderbook/EOrderBookOrders/homedetails.dart';
-import 'package:eorderbook/EOrderBookOrders/orderdetailbylogin.dart';
-import 'package:eorderbook/EOrderBookOrders/ordermapsbylogin.dart';
+import 'package:eorderbook/EOrderBookOrders/OrderLoginHome.dart';
 import 'package:eorderbook/models/distributor.dart';
 import 'package:eorderbook/screens/invoice_list_screen.dart';
 import 'package:eorderbook/services/api_service.dart';
@@ -10,6 +10,9 @@ import 'package:eorderbook/services/distcodedb.dart';
 import 'package:eorderbook/utils/Utils.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:eorderbook/models/maincode.dart';
+import 'package:eorderbook/services/maincodedb.dart';
+import 'package:http/http.dart' as http;
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -31,8 +34,38 @@ class _LoginScreenState extends State<LoginScreen> {
     super.initState();
     _loadDistributors();
     _getDistCode();
+    _initializeDatabase();
+  }
+  String? _mainCode;
+  MainCodeDatabaseHelper dbHelper = MainCodeDatabaseHelper();
+
+  void _initializeDatabase() async {
+    await dbHelper.initializeDatabase();
+    MainCode? mainCode = await dbHelper.getMainCode();
+    if (mainCode != null) {
+      setState(() {
+        _mainCode = mainCode.mainCode;
+      });
+    }
   }
 
+  void _fetchMainCode(String distCode) async {
+    final response = await http.get(
+        Uri.parse(
+            'https://seasoftsales.com/eorderbook/get_maincode.php?dist_code=$distCode'));
+    if (response.statusCode == 200) {
+      final jsonData = json.decode(response.body);
+      final mainCode = MainCode.fromJson(jsonData);
+
+      await dbHelper.insertMainCode(mainCode);
+
+      setState(() {
+        _mainCode = mainCode.mainCode;
+      });
+    } else {
+      throw Exception('Failed to load main code');
+    }
+  }
   _loadDistributors() async {
     try {
       var connectivityResult = await Connectivity().checkConnectivity();
@@ -113,7 +146,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 });
               },
               child: Text(
-                'Welcome Back $dist_Code',
+                'Welcome Back $dist_Code $_mainCode',
                 style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
               ),
             ),
@@ -189,7 +222,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       Navigator.of(context).pop();
                       Navigator.pushReplacement(
                         context,
-                        MaterialPageRoute(builder: (context) =>  OrderDetailsLogin()),
+                        MaterialPageRoute(builder: (context) =>  OrderLoginHome()),
                       );
                     } else {
                       // Handle other cases if needed
@@ -296,6 +329,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     Navigator.of(context).pop();
                     await getData(distCodeController.text);
 
+                    _fetchMainCode(distCodeController.text);
                     // Store the distributor code in the local database
                     DistcodeDatabaseHelper().insertDistCode(distCodeController.text);
                   } else {
