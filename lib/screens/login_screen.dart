@@ -146,7 +146,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 });
               },
               child: Text(
-                'Welcome Back $dist_Code $_mainCode',
+                'Welcome Back $dist_Code',
                 style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
               ),
             ),

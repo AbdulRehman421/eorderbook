@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:eorderbook/EOrderBookOrders/SalesDetails/AllSalesDetails.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
@@ -13,14 +14,17 @@ class SalesDetails extends StatefulWidget {
 
 class _SalesDetailsState extends State<SalesDetails> {
   TextEditingController mainCodeController = TextEditingController();
-  DateTime startDate = DateTime.now();
+  // DateTime startDate = DateTime.now();
   DateTime endDate = DateTime.now();
+  DateTime startDate = DateTime(2021, 1, 1);
+
 
   void initState() {
     super.initState();
-    showInputDialog(context);
     _initializeDatabase();
   }
+
+  bool _isLoading = false;
   List<dynamic> invoices = [];
 
   Future<void> fetchInvoices(
@@ -102,14 +106,24 @@ class _SalesDetailsState extends State<SalesDetails> {
               ),
               TextButton(
                 child: Text('Submit'),
-                onPressed: () {
-                  _mainCode;
-                  String formattedStartDate =
-                      startDate.toIso8601String().split('T')[0];
-                  String formattedEndDate =
-                      endDate.toIso8601String().split('T')[0];
-                  fetchInvoices(_mainCode.toString(), formattedStartDate, formattedEndDate);
-                  Navigator.of(context).pop();
+                onPressed: () async {
+                  var connectivityResult = await Connectivity().checkConnectivity();
+                  if (connectivityResult == ConnectivityResult.none) {
+                    // No internet connection
+                    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                      content: Text('No internet connection'),
+                    ));
+                  } else {
+                    // Internet connection available, proceed with the API call
+                    _mainCode;
+                    String formattedStartDate =
+                    startDate.toIso8601String().split('T')[0];
+                    String formattedEndDate =
+                    endDate.toIso8601String().split('T')[0];
+                    fetchInvoices(
+                        _mainCode.toString(), formattedStartDate, formattedEndDate);
+                    Navigator.of(context).pop();
+                  }
                 },
               ),
             ],
@@ -202,18 +216,42 @@ class _SalesDetailsState extends State<SalesDetails> {
                         height: 50,
                       ),
                       ElevatedButton(
-                        child: Text('Submit',style: TextStyle(
-                          fontSize: 18
-                        ),),
-                        onPressed: () {
-                          _mainCode;
-                          String formattedStartDate =
-                          startDate.toIso8601String().split('T')[0];
-                          String formattedEndDate =
-                          endDate.toIso8601String().split('T')[0];
-                          fetchInvoices(_mainCode.toString(), formattedStartDate, formattedEndDate);
+                        child: _isLoading
+                            ? CircularProgressIndicator() // Show CircularProgressIndicator when loading
+                            : Text(
+                          'Submit',
+                          style: TextStyle(
+                            fontSize: 18,
+                          ),
+                        ),
+                        onPressed: () async {
+                          var connectivityResult = await Connectivity().checkConnectivity();
+                          if (connectivityResult == ConnectivityResult.none) {
+                            // No internet connection
+                            ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                              content: Text('No internet connection'),
+                            ));
+                          } else {
+                            // Internet connection available, proceed with the API call
+                            setState(() {
+                              _isLoading = true; // Set loading state to true
+                            });
+
+                            _mainCode;
+                            String formattedStartDate =
+                            startDate.toIso8601String().split('T')[0];
+                            String formattedEndDate =
+                            endDate.toIso8601String().split('T')[0];
+                            await fetchInvoices(
+                                _mainCode.toString(), formattedStartDate, formattedEndDate);
+
+                            setState(() {
+                              _isLoading = false; // Reset loading state after API call completes
+                            });
+                          }
                         },
                       ),
+
                     ],
                   ),
                 ),
@@ -259,12 +297,15 @@ class _SalesDetailsState extends State<SalesDetails> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                'Main Name : ${invoice['main_name']}',
+                                '${invoice['main_name']}',
                                 style: TextStyle(
-                                    fontSize: 18, fontWeight: FontWeight.bold),
+                                    fontSize: 20, fontWeight: FontWeight.bold),
                               ),
                               Text(
-                                "Net Amount : ${invoice['net_sum']}",
+                                "Sale : ${invoice['net_sum']}", style: TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold
+                              ),
                               ),
                             ],
                           )
