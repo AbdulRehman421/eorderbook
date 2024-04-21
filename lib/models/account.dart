@@ -10,6 +10,7 @@ class Account {
   String address;
   int areaCd;
   String active;
+  String lic_exp_date;
   Color? cardColor; // Property to store the card color
 
 
@@ -21,6 +22,7 @@ class Account {
     required this.address,
     required this.areaCd,
     required this.active,
+    required this.lic_exp_date,
     this.cardColor,
   });
 
@@ -33,6 +35,7 @@ class Account {
       'address': address,
       'areacd': areaCd,
       'active': active,
+      'lic_exp_date': lic_exp_date,
     };
   }
 
@@ -45,6 +48,7 @@ class Account {
       address: map['address'],
       areaCd: map['areacd'],
       active: map['active'],
+      lic_exp_date: map['lic_exp_date'],
     );
   }
 
@@ -57,6 +61,7 @@ class Account {
       address: json['address'],
       areaCd: int.parse(json['areacd']),
       active: json['active'],
+      lic_exp_date: json['lic_exp_date'],
     );
   }
 
@@ -69,6 +74,7 @@ class Account {
       'address': address,
       'areacd': areaCd,
       'active': active,
+      'lic_exp_date': lic_exp_date,
     };
   }
 }

@@ -25,6 +25,8 @@ class _GetInvoicesDetailsState extends State<GetInvoicesDetails> {
 
   // List<dynamic> invoices = [];
   List<dynamic> profitinvoices = [];
+  List<dynamic> originalInvoices = [];
+
   void initState(){
     super.initState();
     // fetchInvoices(widget.mainCode, widget.startDate, widget.endDate);
@@ -44,6 +46,7 @@ class _GetInvoicesDetailsState extends State<GetInvoicesDetails> {
         final responseData = json.decode(response.body);
         setState(() {
           profitinvoices = responseData;
+          originalInvoices = List.from(profitinvoices);
         });
       } else {
         throw Exception('Failed to load data');
@@ -74,6 +77,28 @@ class _GetInvoicesDetailsState extends State<GetInvoicesDetails> {
 
     return totalOrders;
   }
+  double calculateTotalPurchase() {
+    double totalPurchase = 0.0;
+    for (final invoice in profitinvoices) {
+      final qty = int.parse(invoice['qty']);
+      final bonus = int.parse(invoice['bonus']);
+      final pcrt = double.parse(invoice['pcrt']);
+      final purchase = (qty + bonus) * pcrt;
+      totalPurchase += purchase;
+    }
+    return totalPurchase;
+  }
+
+  double calculateBonus() {
+    double totalOrders = 0.0;
+
+    for (var item in profitinvoices) {
+      double qty = double.parse(item['bonus']);
+      totalOrders += qty;
+    }
+
+    return totalOrders;
+  }
   double calculatedip1() {
     double totalOrders = 0.0;
 
@@ -94,6 +119,49 @@ class _GetInvoicesDetailsState extends State<GetInvoicesDetails> {
 
     return totalOrders;
   }
+  double calculategross() {
+    double totalOrders = 0.0;
+
+    for (var item in profitinvoices) {
+      double dip2 = double.parse(item['gross']);
+      totalOrders += dip2;
+    }
+
+    return totalOrders;
+  }
+  double calculated1() {
+    double totalOrders = 0.0;
+
+    for (var item in profitinvoices) {
+      double dip2 = double.parse(item['discount1']);
+      totalOrders += dip2;
+    }
+
+    return totalOrders;
+  }
+  double calculated2() {
+    double totalOrders = 0.0;
+
+    for (var item in profitinvoices) {
+      double dip2 = double.parse(item['discount2']);
+      totalOrders += dip2;
+    }
+
+    return totalOrders;
+  }
+  // double calculatenet() {
+  //   double totalOrders = 0.0;
+  //
+  //   for (var item in profitinvoices) {
+  //     final gross = calculategross();
+  //     final discount1 = calculated1();
+  //     final discount2 = calculated2();
+  //     totalOrders = gross - discount1 - discount2;
+  //   }
+  //
+  //   return totalOrders;
+  // }
+
   double calculatenet() {
     double totalOrders = 0.0;
 
@@ -104,8 +172,75 @@ class _GetInvoicesDetailsState extends State<GetInvoicesDetails> {
 
     return totalOrders;
   }
+  double calculatepcrt() {
+    double totalOrders = 0.0;
 
+    for (var item in profitinvoices) {
+      double net = double.parse(item['pcrt']);
+      totalOrders += net;
+    }
 
+    return totalOrders;
+  }
+  
+  double calculatePurValue() {
+    double totalOrders = 0.0;
+
+    for (var item in profitinvoices) {
+      final qty = calculateQty();
+      final bonus = calculateBonus();
+      final pcrt = calculatepcrt();
+      totalOrders = ( qty + bonus ) * pcrt;
+    }
+
+    return totalOrders;
+  }
+  double calculateProfit() {
+    double totalOrders = 0.0;
+
+    for (var item in profitinvoices) {
+      double profit = double.parse(item['netpp']);
+      totalOrders += profit;
+    }
+
+    return totalOrders;
+  }
+  double calculatePercentage() {
+    double totalOrders = 0.0;
+
+    for (var item in profitinvoices) {
+      final profit = calculateProfit();
+      double net = double.parse(item['net']);
+      totalOrders = (profit / net) * 100;
+    }
+
+    return totalOrders;
+  }
+  TextEditingController searchController = TextEditingController();
+  void searchInvoices(String query) {
+    setState(() {
+      if (query.isNotEmpty) {
+        profitinvoices = originalInvoices.where((invoice) {
+          // Check if the query matches any part of any field of the invoice
+          return invoice['productname'].toString().toLowerCase().contains(query.toLowerCase()) ||
+              invoice['pcode'].toString().toLowerCase().contains(query.toLowerCase()) ||
+              invoice['rate'].toString().toLowerCase().contains(query.toLowerCase()) ||
+              invoice['qty'].toString().toLowerCase().contains(query.toLowerCase()) ||
+              invoice['net'].toString().toLowerCase().contains(query.toLowerCase()) ||
+              invoice['dip1'].toString().toLowerCase().contains(query.toLowerCase()) ||
+              invoice['dip2'].toString().toLowerCase().contains(query.toLowerCase());
+        }).toList();
+      } else {
+        // If the query is empty, reset to the original list of invoices
+        profitinvoices = List.from(originalInvoices);
+      }
+
+      // Check if there are no search results, display a message instead of removing data
+      if (profitinvoices.isEmpty && query.isNotEmpty) {
+        profitinvoices.add({'message': 'No data found for \"$query\"'});
+      }
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -131,6 +266,25 @@ class _GetInvoicesDetailsState extends State<GetInvoicesDetails> {
                         child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
+                Padding(
+                  padding: EdgeInsets.all(8.0),
+                  child: TextField(
+                    controller: searchController,
+                    decoration: InputDecoration(
+                      labelText: 'Search',
+                      suffixIcon: IconButton(
+                        icon: Icon(Icons.clear),
+                        onPressed: () {
+                          searchController.clear();
+                          searchInvoices('');
+                        },
+                      ),
+                    ),
+                    onChanged: (value) {
+                      searchInvoices(value);
+                    },
+                  ),
+                ),
                 if (!isLoading && profitinvoices.isNotEmpty)
                   Card(
                     child: Padding(
@@ -148,7 +302,10 @@ class _GetInvoicesDetailsState extends State<GetInvoicesDetails> {
                                       fontWeight: FontWeight.bold
                                   ),),
                                 ),
-                                Flexible(child: Text(invoiced['name'],
+                                Flexible(child: Text(invoiced['name'] ?? "",style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 16
+                                ),
                                   overflow: TextOverflow.ellipsis, // Handle overflow
                                   maxLines: 1,))
                               ],
@@ -157,11 +314,14 @@ class _GetInvoicesDetailsState extends State<GetInvoicesDetails> {
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
                                 Text('Address :',style: TextStyle(
-                                    fontWeight: FontWeight.bold
+                                    fontWeight: FontWeight.bold,
                                 ),),
                                 Flexible(
                                   child: Text(
-                                    invoiced['address'],
+                                    invoiced['address'] ?? "",style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 16
+                                  ),
                                     overflow: TextOverflow.ellipsis, // Handle overflow
                                     maxLines: 1, // Limit to a single line
                                   ),
@@ -174,16 +334,22 @@ class _GetInvoicesDetailsState extends State<GetInvoicesDetails> {
                                 Text('Area :',style: TextStyle(
                                     fontWeight: FontWeight.bold
                                 ),),
-                                Text(invoiced['areaname'])
+                                Text(invoiced['areaname'] ?? "",style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 16
+                                ),)
                               ],
                             ),
                             Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
-                                Text('Order No :',style: TextStyle(
+                                Text('Bill No :',style: TextStyle(
                                     fontWeight: FontWeight.bold
                                 ),),
-                                Text(invoiced['invno'])
+                                Text(invoiced['invno'] ?? "",style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 16
+                                ),)
                               ],
                             ),
                             Row(
@@ -192,7 +358,9 @@ class _GetInvoicesDetailsState extends State<GetInvoicesDetails> {
                                 Text('Date :',style: TextStyle(
                                     fontWeight: FontWeight.bold
                                 ),),
-                                Text(invoiced['invdt'])
+                                Text(invoiced['date(i.invdt)'] ?? "",style: TextStyle(
+                                    fontWeight: FontWeight.bold
+                                ),)
                               ],
                             ),
                           ],
@@ -220,17 +388,38 @@ class _GetInvoicesDetailsState extends State<GetInvoicesDetails> {
                                   fontSize: 16,
                                   fontWeight: FontWeight.bold
                               ),),
-                            Text('Dip1: ',
+                            Text('Net: ',
                               style: TextStyle(
                                   fontSize: 16,
                                   fontWeight: FontWeight.bold
                               ),),
+                            widget.title == "Gross Profit"
+                        ?Text('Pur Value:',
+                        style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold
+                        ),)
+                            :Text('Dip1: ',
+                              style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold
+                              ),),
+                            widget.title == "Gross Profit"
+                                ?Text('Profit:',
+                              style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold
+                              ),)
+                                :
                             Text('Dip2: ',
                               style: TextStyle(
                                   fontSize: 16,
                                   fontWeight: FontWeight.bold
                               ),),
-                            Text('Net: ',
+                                Text(
+
+                                  widget.title == "Gross Profit"
+                                  ? '%age: ' : '',
                               style: TextStyle(
                                   fontSize: 16,
                                   fontWeight: FontWeight.bold
@@ -245,6 +434,21 @@ class _GetInvoicesDetailsState extends State<GetInvoicesDetails> {
                     itemCount: profitinvoices.length,
                     itemBuilder: (BuildContext context, int index) {
                       final invoice = profitinvoices[index];
+                      final int qty = invoice['qty'] != null ? int.parse(invoice['qty']) : 0;
+                      final double rate = invoice['rate'] != null ? double.parse(invoice['rate']) : 0.0;
+                      final double bonus = invoice['bonus'] != null ? double.parse(invoice['bonus']) : 0.0;
+                      final double profit = invoice['netpp'] != null ? double.parse(invoice['netpp']) : 0.0;
+                      final double pcrt = invoice['pcrt'] != null ? double.parse(invoice['pcrt']) : 0.0;
+                      final double dip1 = invoice['dip1'] != null ? double.parse(invoice['dip1']) : 0.0;
+                      final double dip2 = invoice['dip2'] != null ? double.parse(invoice['dip2']) : 0.0;
+                      final double net = invoice['net'] != null ? double.parse(invoice['net']) : 0.0;
+
+                      final purchase = (qty + bonus) * pcrt;
+                      final percentageValue = (profit / net ) * 100;
+                      final gross = qty * rate;
+                      final d1 = gross * dip1 / 100;
+                      final d2 = (gross - d1) * dip2 / 100;
+                      final netValue = gross - d1 - d2;
                       return Column(
                         children: [
                           Card(
@@ -279,21 +483,41 @@ class _GetInvoicesDetailsState extends State<GetInvoicesDetails> {
                                           fontSize: 16,
                                           fontWeight: FontWeight.bold
                                       ),),
-                                    Text('${invoice['dip1']}',
+                                    Text('${netValue.toStringAsFixed(2)}',
                                       style: TextStyle(
                                           fontSize: 16,
                                           fontWeight: FontWeight.bold
                                       ),),
-                                    Text('${invoice['dip2']}',
+                                    widget.title == "Gross Profit"
+                                    ?Text("${purchase.toStringAsFixed(2)}",
+                                      style: TextStyle(
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.bold
+                                      ),)
+                                        :Text('${invoice['dip1']}',
                                       style: TextStyle(
                                           fontSize: 16,
                                           fontWeight: FontWeight.bold
                                       ),),
-                                    Text('${invoice['net']}',
+                                    widget.title == "Gross Profit"
+                                    ?Text('${profit.toStringAsFixed(2)}',
+                                      style: TextStyle(
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.bold
+                                      ),)
+                                        :Text('${invoice['dip2']}',
                                       style: TextStyle(
                                           fontSize: 16,
                                           fontWeight: FontWeight.bold
                                       ),),
+                                    widget.title == "Gross Profit"
+                                        ?Text('${percentageValue.toStringAsFixed(2)}%',
+                                      style: TextStyle(
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.bold
+                                      ),)
+                                        : SizedBox(),
+
                                   ],
                                 )
                               ],
@@ -311,72 +535,104 @@ class _GetInvoicesDetailsState extends State<GetInvoicesDetails> {
                       child: isLoading == true || profitinvoices.isEmpty
                           ? null // Show circular progress indicator if loading or order data is empty
                           :
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                      Column(
                         children: [
-                          Text('${calculateRate().toStringAsFixed(0)}',
-                            style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold
-                            ),),
-                          Text('${calculateQty().toStringAsFixed(0)}',
-                            style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold
-                            ),),
-                          Text('${calculatedip1().toStringAsFixed(0)}',
-                            style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold
-                            ),),
-                          Text('${calculatedip2().toStringAsFixed(0)}',
-                            style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold
-                            ),),
-                          Text('${calculatenet().toStringAsFixed(0)}',
-                            style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold
-                            ),),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                            children: [
+                              Text(
+                                widget.title == "Gross Profit"
+                                ? 'Net' : 'Gross',
+                                style: TextStyle(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.bold
+                                ),),
+                              Text(
+                                widget.title == "Gross Profit"
+                                    ? 'Pur Value' : 'D1',
+                                style: TextStyle(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.bold
+                                ),),
+                              Text(
+                                widget.title == "Gross Profit"
+                                    ? 'Profit' : 'D2',
+                                style: TextStyle(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.bold
+                                ),),
+                              Text(
+                                widget.title == "Gross Profit"
+                                    ? '%age' : 'Net',
+                                style: TextStyle(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.bold
+                                ),),
+                            ],
+                          ),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                            children: [
+                              Text(widget.title == "Gross Profit"
+                                  ?'${invoiced['net'] ?? ""}' : invoiced['gross'] ?? "",
+                                style: TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold
+                                ),),
+                              Text(widget.title == "Gross Profit"
+                                  ?'${calculateTotalPurchase().toStringAsFixed(2)}' : invoiced['discount1'] ?? "",
+                                style: TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold
+                                ),),
+                              Text(widget.title == "Gross Profit"
+                                  ?'${calculateProfit().toStringAsFixed(2)}' : invoiced['discount2'] ?? "",
+                                style: TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold
+                                ),),
+                              Text(widget.title == "Gross Profit"
+                                  ?'${calculatePercentage().toStringAsFixed(2)}' : invoiced['net'] ?? "",
+                                style: TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold
+                                ),),
+                            ],
+                          ),
+                          SizedBox(
+                            height: 10,
+                          ),
+                          widget.title == "Gross Profit"
+                          ? Container()
+                          :Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text('Return : ${widget.salesReturn}',
+                                style: TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.bold
+                                ),),
+                              Text('Cash : ${widget.cash}',
+                                style: TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.bold
+                                ),),
+                              Text('STax :${invoiced['stax']}',
+                                style: TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.bold
+                                ),),
+                              Text('ITax :${invoiced['itax']}',
+                                style: TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.bold
+                                ),),
+                            ],
+                          )
                         ],
                       )
                   ),
                 ),
-                Card(
-                  color: Colors.greenAccent,
-                  child: Padding(
-                      padding: const EdgeInsets.only(left: 20, bottom: 10, top: 10, right: 20),
-                      child: isLoading == true || profitinvoices.isEmpty
-                          ? null // Show circular progress indicator if loading or order data is empty
-                          :
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text('Return : ${widget.salesReturn}',
-                            style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold
-                            ),),
-                          Text('Cash : ${widget.cash}',
-                            style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold
-                            ),),
-                          Text('STax :${invoiced['stax']}',
-                            style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold
-                            ),),
-                          Text('ITax :${invoiced['itax']}',
-                            style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold
-                            ),),
-                        ],
-                      )
-                  ),
-                )
               ],
                         ),
                       ),

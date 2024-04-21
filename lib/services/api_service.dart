@@ -2,7 +2,6 @@ import 'dart:convert';
 import 'package:eorderbook/models/account.dart';
 import 'package:eorderbook/models/area.dart';
 import 'package:eorderbook/models/company.dart';
-import 'package:eorderbook/models/distributor.dart';
 import 'package:eorderbook/models/product.dart';
 import 'package:eorderbook/models/sector.dart';
 import 'package:eorderbook/models/user.dart';
@@ -12,7 +11,8 @@ import 'package:http/http.dart' as http;
 import 'db_helper.dart'; // Import all your model classes
 
 class ApiService {
-  static const String baseUrl = 'https://seasoftsales.com/eorderbook'; // Replace with your API base URL
+  static const String baseUrl = 'https://seasoftsales.com/eorderbook';
+
 
   Future<bool> syncData(String distCode) async {
     // Truncate all tables before syncing new data
@@ -67,8 +67,26 @@ class ApiService {
       throw Exception('Dist_code not available on the server');
     }
   }
+  Future<String> getCheckLicExpDate(String distCode) async {
+    // Make API call to retrieve data for the given distCode
+    String apiUrl = 'https://seasoftsales.com/eorderbook/get_distcode.php?dist_code=$distCode';
+    final response = await http.get(Uri.parse(apiUrl));
 
+    if (response.statusCode == 200) {
+      // Parse the response JSON
+      List<dynamic> responseData = json.decode(response.body);
 
+      // Extract the value of 'check_lic_expdate' from the first item in the list
+      if (responseData.isNotEmpty) {
+        String checkLicExpDate = responseData[0]['check_lic_expdate'];
+        return checkLicExpDate;
+      } else {
+        throw Exception('No data found for dist_code: $distCode');
+      }
+    } else {
+      throw Exception('Failed to load data from API');
+    }
+  }
   Future<List<Account>> getAccounts(distCode) async {
     final Map<String, String> requestData = {'dist_code': distCode};
     final String requestBody = json.encode(requestData);
@@ -141,16 +159,16 @@ class ApiService {
       throw Exception('Failed to validate distributor code');
     }
   }
-  Future<List<Distributor>> getDistributors() async {
-    final response = await http.get(Uri.parse('$baseUrl/get_distributors.php'));
-
-    if (response.statusCode == 200) {
-      List<dynamic> data = json.decode(response.body);
-      return data.map((json) => Distributor.fromJson(json)).toList();
-    } else {
-      throw Exception('Failed to load distributors');
-    }
-  }
+  // Future<List<Distributor>> getDistributors() async {
+  //   final response = await http.get(Uri.parse('$baseUrl/get_distributors.php'));
+  //
+  //   if (response.statusCode == 200) {
+  //     List<dynamic> data = json.decode(response.body);
+  //     return data.map((json) => Distributor.fromJson(json)).toList();
+  //   } else {
+  //     throw Exception('Failed to load distributors');
+  //   }
+  // }
 
   Future<List<Product>> getProducts(distCode) async {
     final Map<String, String> requestData = {'dist_code': distCode};

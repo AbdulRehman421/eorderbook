@@ -4,7 +4,7 @@
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
     <uses-permission android:name="android.permission.LOCATION" />
     <application
-        android:label="eorderbook"
+        android:label="E Sales"
         android:name="${applicationName}"
         android:icon="@mipmap/launcher_icon">
         <activity

@@ -2,7 +2,6 @@ import 'dart:convert';
 
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:eorderbook/EOrderBookOrders/OrderLoginHome.dart';
-import 'package:eorderbook/models/distributor.dart';
 import 'package:eorderbook/screens/invoice_list_screen.dart';
 import 'package:eorderbook/services/api_service.dart';
 import 'package:eorderbook/services/db_helper.dart';
@@ -14,6 +13,7 @@ import 'package:eorderbook/models/maincode.dart';
 import 'package:eorderbook/services/maincodedb.dart';
 import 'package:http/http.dart' as http;
 
+
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
 
@@ -22,11 +22,9 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
-  Distributor? selectedDistributor;
   TextEditingController usernameController = TextEditingController();
   TextEditingController passwordController = TextEditingController();
 
-  List<Distributor> distributors = [];
   String distCode = "";
   bool _isPasswordVisible = false;
   @override
@@ -74,14 +72,7 @@ class _LoginScreenState extends State<LoginScreen> {
         return false;
       }
 
-      ApiService apiService = ApiService();
-      List<Distributor> distributorsFromApi =
-      await apiService.getDistributors();
 
-      await DatabaseHelper.instance
-          .bulkInsertDistributors(distributorsFromApi);
-
-      await _updateDistributorsList();
 
     } catch (e) {
       debugPrint('Error loading distributors: $e');
@@ -90,15 +81,6 @@ class _LoginScreenState extends State<LoginScreen> {
     return true;
   }
 
-  _updateDistributorsList() async {
-    List<Distributor> distributorObjects =
-    await DatabaseHelper.instance.getAllDistributors();
-
-    setState(() {
-      distributors = distributorObjects;
-      selectedDistributor = distributors.isNotEmpty ? distributors.first : null;
-    });
-  }
   String dist_Code = '0';
   Future<void> _getDistCode() async {
     String? distributorCode = await DistcodeDatabaseHelper().getDistributorCode();
@@ -116,10 +98,10 @@ class _LoginScreenState extends State<LoginScreen> {
           IconButton(
             icon: const Icon(Icons.sync),
             onPressed: () async {
-              ApiService apiService = ApiService();
-              List<Distributor> distributorsFromApi =
-              await apiService.getDistributors();
-              print('helo $distributorsFromApi');
+              // ApiService apiService = ApiService();
+              // List<Distributor> distributorsFromApi =
+              // await apiService.getDistributors();
+              // print('helo $distributorsFromApi');
               await Utils.showLoaderDialog(context ,"Checking Orders", "Please wait..." );
               var ordersCount = await DatabaseHelper.instance.getAllOrdersCount();
               Navigator.of(context).pop();
@@ -321,7 +303,6 @@ class _LoginScreenState extends State<LoginScreen> {
               onPressed: () async {
                 if (distCodeController.text.isNotEmpty && securityKeyController.text.isNotEmpty) {
                   // Validate dist_code and security_key
-
                   ApiService apiService = ApiService();
                   bool isValid = await apiService.validateDistCode(distCodeController.text, securityKeyController.text);
 
@@ -330,8 +311,14 @@ class _LoginScreenState extends State<LoginScreen> {
                     await getData(distCodeController.text);
 
                     _fetchMainCode(distCodeController.text);
+
                     // Store the distributor code in the local database
                     DistcodeDatabaseHelper().insertDistCode(distCodeController.text);
+
+                    // Store the value of check_lic_expdate in shared preferences
+                    SharedPreferences prefs = await SharedPreferences.getInstance();
+                    String checkLicExpDate = await apiService.getCheckLicExpDate(distCodeController.text);
+                    prefs.setString('check_lic_expdate', checkLicExpDate);
                   } else {
                     Utils.showToast('Invalid distributor code or security key.');
                   }
@@ -339,8 +326,10 @@ class _LoginScreenState extends State<LoginScreen> {
                   Utils.showToast('Please enter both distributor code and security key');
                 }
               },
-              child: const Text('Sync Data'),
+              child: Text('Sync Data'),
             ),
+
+
           ],
         );
       },
@@ -378,7 +367,6 @@ class _LoginScreenState extends State<LoginScreen> {
       await apiService.syncData(distCode);
       Utils.showToast('Sync successful');
       this.distCode = distCode;
-      await _updateDistributorsList();
     } catch (e) {
       Utils.showToast('${e}Sync failed');
       debugPrint('Error syncing data: $e');

@@ -20,7 +20,6 @@ import 'package:path/path.dart' as path;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sqflite/sqflite.dart';
 
-import '../models/distributor.dart';
 import '../services/distcodedb.dart';
 
 class InvoiceListScreen extends StatefulWidget {
@@ -52,7 +51,7 @@ class _InvoiceListScreenState extends State<InvoiceListScreen> with RouteAware {
 
     String query = '''
       SELECT eorderbook_master.order_id, eorderbook_master.date,eorderbook_master.remarks, eorderbook_master.order_amount,
-            eorderbook_master.app_orderno, account.ID as accId, account.name as accName,
+            eorderbook_master.app_orderno, account.ID as accId, account.name as accName, account.lic_exp_date as lic_exp_date ,
             account.code, account.dist_code, account.address, account.areacd, account.active
       FROM eorderbook_master
       JOIN account ON eorderbook_master.code = account.code
@@ -72,6 +71,7 @@ class _InvoiceListScreenState extends State<InvoiceListScreen> with RouteAware {
         int areaCode = row['areacd'];
         int accDistCode = row['dist_code'];
         String accActive = row['active'];
+        String lic_exp_date = row['lic_exp_date'];
         int accCode = row['code'];
         String accAddress = row['address'];
 
@@ -147,9 +147,12 @@ class _InvoiceListScreenState extends State<InvoiceListScreen> with RouteAware {
                 code: accCode,
                 distCode: accDistCode,
                 areaCd: areaCode,
-                active: accActive),
+                active: accActive,
+              lic_exp_date: lic_exp_date,
+            ),
             date,
-        remarks
+        remarks,
+          lic_exp_date
         ));
       }
     } else {

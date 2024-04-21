@@ -9,10 +9,12 @@ class GetInvoices extends StatefulWidget {
   final String name;
   final String title;
   String type;
+  String type1;
+  String type2;
   final String distCode;
   final String startDate;
   final String endDate;
-  GetInvoices({required this.mainCode,required this.title,required this.name,required this.distCode,required this.type, required this.startDate, required this.endDate});
+  GetInvoices({required this.mainCode,required this.title,required this.name,required this.distCode,required this.type,required this.type1,required this.type2, required this.startDate, required this.endDate});
 
   @override
   _GetInvoicesState createState() => _GetInvoicesState();
@@ -23,16 +25,26 @@ class _GetInvoicesState extends State<GetInvoices> {
 
   // List<dynamic> invoices = [];
   List<dynamic> profitinvoices = [];
+  List<dynamic> originalInvoices = [];
+
   void initState(){
     super.initState();
     // fetchInvoices(widget.mainCode, widget.startDate, widget.endDate);
+    selectedType = widget.type;
     _refreshData();
   }
-  Future<void> _refreshData() async {;
-  fetchProfit(widget.distCode, widget.startDate, widget.endDate);
+  bool isSearching = false;
+  Future<void> _refreshData() async {
+    setState(() {
+      isSearching = true; // Set the flag to indicate searching is ongoing
+    });
+    await fetchProfit(widget.distCode, widget.startDate, widget.endDate);
+    setState(() {
+      isSearching = false; // Reset the flag when searching is finished
+    });
   }
   Future<void> fetchProfit(String distcode, String startDate, String endDate) async {
-    final url = Uri.parse('https://seasoftsales.com/eorderbook/get_invoice.php?type=${widget.type}&dist_code=${widget.distCode}&start_date=$startDate&end_date=$endDate');
+    final url = Uri.parse('https://seasoftsales.com/eorderbook/get_invoice.php?type=${selectedType}&dist_code=${widget.distCode}&start_date=$startDate&end_date=$endDate');
 
     try {
       final response = await http.get(url);
@@ -41,6 +53,8 @@ class _GetInvoicesState extends State<GetInvoices> {
         final responseData = json.decode(response.body);
         setState(() {
           profitinvoices = responseData;
+          originalInvoices = List.from(profitinvoices); // Store original invoices for resetting
+
         });
       } else {
         throw Exception('Failed to load data');
@@ -55,62 +69,111 @@ class _GetInvoicesState extends State<GetInvoices> {
     double totalOrders = 0.0;
 
     for (var item in profitinvoices) {
-      double gross = double.parse(item['gross']);
-      totalOrders += gross;
+      // Check if 'gross' is not null before parsing
+      if (item['gross'] != null) {
+        double gross = double.parse(item['gross'].toString());
+        totalOrders += gross;
+      }
     }
 
     return totalOrders;
   }
+
   double calculated1() {
     double totalOrders = 0.0;
 
     for (var item in profitinvoices) {
-      double dis1 = double.parse(item['discount1']);
-      totalOrders += dis1;
+      if (item['discount1'] != null) {
+        double dis1 = double.parse(item['discount1'].toString());
+        totalOrders += dis1;
+      }
     }
 
     return totalOrders;
   }
+
   double calculated2() {
     double totalOrders = 0.0;
 
     for (var item in profitinvoices) {
-      double discount2 = double.parse(item['discount2']);
-      totalOrders += discount2;
+      if (item['discount2'] != null) {
+        double discount2 = double.parse(item['discount2'].toString());
+        totalOrders += discount2;
+      }
     }
 
     return totalOrders;
   }
+
   double calculatenet() {
     double totalOrders = 0.0;
 
     for (var item in profitinvoices) {
-      double net = double.parse(item['net']);
-      totalOrders += net;
+      if (item['net'] != null) {
+        double net = double.parse(item['net'].toString());
+        totalOrders += net;
+      }
     }
 
     return totalOrders;
   }
+
   double calculatereturn() {
     double totalOrders = 0.0;
 
     for (var item in profitinvoices) {
-      double sale_return = double.parse(item['sale_return']);
-      totalOrders += sale_return;
+      if (item['sale_return'] != null) {
+        double saleReturn = double.parse(item['sale_return'].toString());
+        totalOrders += saleReturn;
+      }
     }
 
     return totalOrders;
   }
+
   double calculatecash() {
     double totalOrders = 0.0;
 
     for (var item in profitinvoices) {
-      double cash = double.parse(item['cash']);
-      totalOrders += cash;
+      if (item['cash'] != null) {
+        double cash = double.parse(item['cash'].toString());
+        totalOrders += cash;
+      }
     }
 
     return totalOrders;
   }
+
+  TextEditingController searchController = TextEditingController();
+  void searchInvoices(String query) {
+    setState(() {
+      if (query.isNotEmpty) {
+        profitinvoices = originalInvoices.where((invoice) {
+          // Check if the query matches the beginning of any field of the invoice
+          return invoice['invno'].toString().toLowerCase().contains(query.toLowerCase()) ||
+              invoice['name'].toString().toLowerCase().contains(query.toLowerCase()) ||
+              invoice['gross'].toString().toLowerCase().contains(query.toLowerCase()) ||
+              invoice['discount1'].toString().toLowerCase().contains(query.toLowerCase()) ||
+              invoice['discount2'].toString().toLowerCase().contains(query.toLowerCase()) ||
+              invoice['net'].toString().toLowerCase().contains(query.toLowerCase()) ||
+              invoice['cash'].toString().toLowerCase().contains(query.toLowerCase());
+        }).toList();
+      } else {
+        // If the query is empty, reset to the original list of invoices
+        profitinvoices = List.from(originalInvoices);
+      }
+
+      // Check if there are no search results, display a message instead of removing data
+      if (profitinvoices.isEmpty && query.isNotEmpty) {
+        profitinvoices.add({'message': 'No data found for \"$query\"'});
+      }
+    });
+  }
+
+  String selectedType = ''; // Newly added to track the selected type
+bool loading = true;
+
+
 
 
   @override
@@ -119,25 +182,79 @@ class _GetInvoicesState extends State<GetInvoices> {
     return Scaffold(
       appBar: AppBar(
         centerTitle: true,
-        title:
-        profitinvoices.isNotEmpty
-            ?Column(
+        title:Row(
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Text(widget.title)
+            Text('${widget.title} Type      '),
+            DropdownButton<String>(
+              value: selectedType,
+              onChanged: (String? newValue) {
+                setState(() {
+                  selectedType = newValue!;
+                  _refreshData();
+                });
+              },
+              items: <String>[
+                if (widget.type.isNotEmpty) widget.type,
+                if (widget.type1.isNotEmpty) widget.type1,
+                if (widget.type2.isNotEmpty) widget.type2,
+              ].map<DropdownMenuItem<String>>((String value) {
+                return DropdownMenuItem<String>(
+                  value: value,
+                  child: Text(value),
+                );
+              }).toList(),
+            ),
+
           ],
-        )
-            : CircularProgressIndicator(),
+        ),
+
       ),
       body:
       profitinvoices.isEmpty
-      ? Center(child: CircularProgressIndicator())
+      ? Center(child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          CircularProgressIndicator(),
+          Text('No Data Found',style: TextStyle(
+            fontWeight: FontWeight.bold,
+            fontSize: 18
+          ),),
+        ],
+      ))
       : RefreshIndicator(
         onRefresh: _refreshData,
         child: Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Card(
+              Padding(
+                padding: EdgeInsets.symmetric(
+                  horizontal: 15,
+                  vertical: 10
+                ),
+                child: TextField(
+                  controller: searchController,
+                  decoration: InputDecoration(
+                    labelText: 'Search',
+                    suffixIcon: IconButton(
+                      icon: Icon(Icons.clear),
+                      onPressed: () {
+                        searchController.clear();
+                        searchInvoices('');
+                      },
+                    ),
+                  ),
+                  onChanged: (value) {
+                    searchInvoices(value);
+                  },
+                ),
+              ),
+              isSearching
+                  ? Center(child: CircularProgressIndicator())
+                  : profitinvoices.isEmpty
+                  ? Center(child: Text('No data found'))
+                  :  Card(
                 child: Padding(
                   padding: EdgeInsets.symmetric(vertical: 5 , horizontal : 60,),
                   child: Column(
@@ -153,7 +270,11 @@ class _GetInvoicesState extends State<GetInvoices> {
                 ),
               ),
               if (!isLoading && profitinvoices.isNotEmpty)
-                Card(
+                isSearching
+                    ? Center(child: CircularProgressIndicator())
+                    : profitinvoices.isEmpty
+                    ? Center(child: Text('No data found'))
+                    : Card(
                   color: Colors.lightGreenAccent,
                   child: Padding(
                     padding: const EdgeInsets.only(left: 20 , right: 20 , top: 5, bottom: 5),
@@ -182,11 +303,11 @@ class _GetInvoicesState extends State<GetInvoices> {
                                             fontSize: 16,
                                             fontWeight: FontWeight.bold
                                         ),),
-                           Text('Return: ',
-                                        style: TextStyle(
-                                            fontSize: 16,
-                                            fontWeight: FontWeight.bold
-                                        ),),
+                           // Text('Return: ',
+                           //              style: TextStyle(
+                           //                  fontSize: 16,
+                           //                  fontWeight: FontWeight.bold
+                           //              ),),
                           Text('Cash: ',
                                         style: TextStyle(
                                             fontSize: 16,
@@ -198,7 +319,11 @@ class _GetInvoicesState extends State<GetInvoices> {
                   ),
                 ),
               Expanded(
-                child: ListView.builder(
+                child: isSearching
+                    ? Center(child: CircularProgressIndicator())
+                    : profitinvoices.isEmpty
+                    ? Center(child: Text('No data found'))
+                    : ListView.builder(
                   itemCount: profitinvoices.length,
                   itemBuilder: (BuildContext context, int index) {
                     final invoice = profitinvoices[index];
@@ -264,11 +389,11 @@ class _GetInvoicesState extends State<GetInvoices> {
                                           fontSize: 16,
                                           fontWeight: FontWeight.bold
                                       ),),
-                                    Text('${invoice['sale_return']}',
-                                      style: TextStyle(
-                                          fontSize: 16,
-                                          fontWeight: FontWeight.bold
-                                      ),),
+                                    // Text('${invoice['sale_return']}',
+                                    //   style: TextStyle(
+                                    //       fontSize: 16,
+                                    //       fontWeight: FontWeight.bold
+                                    //   ),),
                                     Text('${invoice['cash']}',
                                       style: TextStyle(
                                           fontSize: 16,
@@ -320,11 +445,11 @@ class _GetInvoicesState extends State<GetInvoices> {
                       fontSize: 16,
                       fontWeight: FontWeight.bold
                   ),),
-                Text('${calculatereturn().toStringAsFixed(0)}',
-                  style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold
-                  ),),
+                // Text('${calculatereturn().toStringAsFixed(0)}',
+                //   style: TextStyle(
+                //       fontSize: 16,
+                //       fontWeight: FontWeight.bold
+                //   ),),
                 Text('${calculatecash().toStringAsFixed(0)}',
                   style: TextStyle(
                       fontSize: 16,

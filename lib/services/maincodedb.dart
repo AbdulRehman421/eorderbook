@@ -23,12 +23,17 @@ class MainCodeDatabaseHelper {
       throw Exception("Database not initialized");
     }
 
+    // Delete existing main code if it exists
+    await _database.delete('main_codes');
+
+    // Insert the new main code
     await _database.insert(
       'main_codes',
       mainCode.toJson(),
       conflictAlgorithm: ConflictAlgorithm.replace,
     );
   }
+
 
   Future<MainCode?> getMainCode() async {
     if (_database == null) {

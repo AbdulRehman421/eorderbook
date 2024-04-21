@@ -3,7 +3,6 @@ import 'dart:convert';
 import 'package:eorderbook/models/account.dart';
 import 'package:eorderbook/models/area.dart';
 import 'package:eorderbook/models/company.dart';
-import 'package:eorderbook/models/distributor.dart';
 import 'package:eorderbook/models/order_details.dart';
 import 'package:eorderbook/models/product.dart';
 import 'package:eorderbook/models/sector.dart';
@@ -71,6 +70,7 @@ class DatabaseHelper {
         name TEXT NOT NULL,
         address TEXT NOT NULL,
         areacd INTEGER NOT NULL,
+        lic_exp_date TEXT NOT NULL,
         active TEXT NOT NULL DEFAULT 'Y'
       )
     ''');
@@ -196,22 +196,6 @@ class DatabaseHelper {
     await db.close();
   }
 
-  Future<List<Distributor>> getAllDistributors() async {
-    Database db = await database;
-
-    if(!db.isOpen) {
-      String path = join(await getDatabasesPath(), 'eOrderBook.db');
-      db = await openDatabase(path);
-    }
-
-    final List<Map<String, dynamic>> maps = await db.query('distributor');
-
-    await db.close();
-
-    return List.generate(maps.length, (i) {
-      return Distributor.fromMap(maps[i]);
-    });
-  }
   Future<List<User>> getAllUsers() async {
     Database db = await database;
 
@@ -423,29 +407,6 @@ class DatabaseHelper {
     await db.close();
   }
 
-  Future<void> bulkInsertDistributors(List<Distributor> distributors) async {
-    Database db = await database;
-
-    if(!db.isOpen) {
-      String path = join(await getDatabasesPath(), 'eOrderBook.db');
-      db = await openDatabase(path);
-    }
-
-    final batch = db.batch();
-
-    try {
-      for (final distributor in distributors) {
-        batch.insert('distributor', distributor.toMap(), conflictAlgorithm: ConflictAlgorithm.replace);
-      }
-
-      await batch.commit();
-    } catch (e) {
-      debugPrint('Error inserting distributors: $e');
-    }
-
-    // Close the database
-    await db.close();
-  }
 
   Future<void> bulkInsertProducts(List<Product> products) async {
     Database db = await database;
@@ -490,29 +451,6 @@ class DatabaseHelper {
       await batch.commit();
     } catch (e) {
       debugPrint('Error inserting sectors: $e');
-    }
-
-    // Close the database
-    await db.close();
-  }
-  Future<void> bulkInsertDistCode(List<Distributor> distributors) async {
-    Database db = await database;
-
-    if (!db.isOpen) {
-      String path = join(await getDatabasesPath(), 'eOrderBook.db');
-      db = await openDatabase(path);
-    }
-
-    final batch = db.batch();
-
-    try {
-      for (final distributor in distributors) {
-        batch.insert('distributor', distributor.toMap(), conflictAlgorithm: ConflictAlgorithm.replace);
-      }
-
-      await batch.commit();
-    } catch (e) {
-      debugPrint('Error inserting distributors: $e');
     }
 
     // Close the database

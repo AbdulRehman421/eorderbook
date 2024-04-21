@@ -82,6 +82,9 @@ class _AllSalesDetailsState extends State<AllSalesDetails> {
                   itemCount: invoices.length,
                   itemBuilder: (BuildContext context, int index) {
                     final invoice = invoices[index];
+                    final net = double.parse(invoice['net']);
+                    final ret = double.parse(invoice['ret']);
+                    final total = net - ret;
                     return GestureDetector(
                       onTap: () {
                         Navigator.push(context, MaterialPageRoute(builder: (context) => SalesProfitDetails(mainCode: widget.mainCode, startDate: widget.startDate, endDate: widget.endDate, distCode: invoice['dist_code'],),));
@@ -107,10 +110,10 @@ class _AllSalesDetailsState extends State<AllSalesDetails> {
                               children: [
                                 Text('Branch : ${invoice['dist_name']}',
                                   style: TextStyle(
-                                      fontSize: 20,
+                                      fontSize: 19,
                                       fontWeight: FontWeight.bold
                                   ),),
-                                Text("Sale : ${invoice['net']}", style: TextStyle(
+                                Text("Sale : ${total}", style: TextStyle(
                                   fontSize: 16,
                                   fontWeight: FontWeight.bold
                                 ),

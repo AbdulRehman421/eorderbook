@@ -11,6 +11,7 @@ class MyData {
   int invoiceId;
   int invoiceNumber;
   String remarks;
+  String lic_exp_date;
   String? partyCode = "";
 
   @override
@@ -19,7 +20,7 @@ class MyData {
   }
 
   MyData(this.products, this.invoiceId, this.invoiceNumber, this.paidAmount, this.customer,
-      this.date , this.remarks);
+      this.date , this.remarks , this.lic_exp_date);
 
   double get discountTotal {
     double initial = 0;
