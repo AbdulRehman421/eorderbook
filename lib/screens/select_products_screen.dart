@@ -745,7 +745,8 @@ class _SelectProductsScreenState extends State<SelectProductsScreen> {
               width: 10,
             ),
           ],
-          leading: IconButton(onPressed: () async {
+          leading: IconButton(
+              onPressed: () async {
             bool confirmCancelOrder = await showDialog(
               context: context,
               builder: (context) {

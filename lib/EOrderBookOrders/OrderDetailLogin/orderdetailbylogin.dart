@@ -94,7 +94,7 @@ class _OrderDetailsLoginState extends State<OrderDetailsLogin> {
     final String requestBody = json.encode(requestData);
 
     final response = await http.post(
-      Uri.parse('https://seasoftsales.com/eorderbook/get_users.php/$distCode'),
+      Uri.parse('https://seasoftsales.com/eorderbook/get_product_name.php/$distCode'),
       headers: {'Content-Type': 'application/json'},
       body: requestBody,
     );

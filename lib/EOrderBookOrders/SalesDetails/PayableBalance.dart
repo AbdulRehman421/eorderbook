@@ -216,7 +216,7 @@ class _PayabaleBalanceState extends State<PayabaleBalance> {
                     : profitinvoices.isEmpty
                     ? Center(child: Text('No data found'))
                     : Card(
-                  color: Colors.lightGreenAccent,
+                  color: Colors.green.shade900,
                   child: Padding(
                     padding: const EdgeInsets.only(left: 20 , right: 20 , top: 5, bottom: 5),
                     child: Container(
@@ -226,11 +226,13 @@ class _PayabaleBalanceState extends State<PayabaleBalance> {
                         children: [
                           Text('Name: ',
                             style: TextStyle(
+                                          color: Colors.white,
                                 fontSize: 16,
                                 fontWeight: FontWeight.bold
                             ),),
                           Text('Balance: ',
                             style: TextStyle(
+                                          color: Colors.white,
                                 fontSize: 16,
                                 fontWeight: FontWeight.bold
                             ),),

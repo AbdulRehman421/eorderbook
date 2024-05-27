@@ -215,7 +215,7 @@ class _CashOutState extends State<CashOut> {
                     : profitinvoices.isEmpty
                     ? Center(child: Text('No data found'))
                     : Card(
-                  color: Colors.lightGreenAccent,
+                  color: Colors.green.shade900,
                   child: Padding(
                     padding: const EdgeInsets.only(left: 20 , right: 20 , top: 5, bottom: 5),
                     child: Container(
@@ -225,26 +225,31 @@ class _CashOutState extends State<CashOut> {
                         children: [
                           Text('V No: ',
                             style: TextStyle(
+                                          color: Colors.white,
                                 fontSize: 16,
                                 fontWeight: FontWeight.bold
                             ),),
                           Text('Date: ',
                             style: TextStyle(
+                                          color: Colors.white,
                                 fontSize: 16,
                                 fontWeight: FontWeight.bold
                             ),),
                           Text('Type: ',
                             style: TextStyle(
+                                          color: Colors.white,
                                 fontSize: 16,
                                 fontWeight: FontWeight.bold
                             ),),
                           Text('Doc No: ',
                             style: TextStyle(
+                                          color: Colors.white,
                                 fontSize: 16,
                                 fontWeight: FontWeight.bold
                             ),),
                           Text('Credit: ',
                             style: TextStyle(
+                                          color: Colors.white,
                                 fontSize: 16,
                                 fontWeight: FontWeight.bold
                             ),),

@@ -10,14 +10,13 @@ class SalesDetails extends StatefulWidget {
   @override
   _SalesDetailsState createState() => _SalesDetailsState();
 }
-
 class _SalesDetailsState extends State<SalesDetails> {
   TextEditingController mainCodeController = TextEditingController();
   DateTime startDate = DateTime.now();
   DateTime endDate = DateTime.now();
   // DateTime startDate = DateTime(2021, 1, 1);
 
-
+  @override
   void initState() {
     super.initState();
     _initializeDatabase();

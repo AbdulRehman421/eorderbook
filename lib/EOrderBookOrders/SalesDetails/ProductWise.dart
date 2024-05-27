@@ -165,7 +165,7 @@ class _ProductWIseState extends State<ProductWIse> {
                 ),
                 if (!isLoading && profitinvoices.isNotEmpty)
                   Card(
-                    color: Colors.lightGreenAccent,
+                    color: Colors.green.shade900,
                     child: Padding(
                       padding: const EdgeInsets.only(left: 20 , right: 20 , top: 5, bottom: 5),
                       child: Container(
@@ -175,36 +175,43 @@ class _ProductWIseState extends State<ProductWIse> {
                           children: [
                             Text('Rate: ',
                               style: TextStyle(
+                                          color: Colors.white,
                                   fontSize: 16,
                                   fontWeight: FontWeight.bold
                               ),),
                             Text('Dis1: ',
                               style: TextStyle(
+                                          color: Colors.white,
                                   fontSize: 16,
                                   fontWeight: FontWeight.bold
                               ),),
                             Text('Dis2: ',
                               style: TextStyle(
+                                          color: Colors.white,
                                   fontSize: 16,
                                   fontWeight: FontWeight.bold
                               ),),
                             Text('Net Rate: ',
                               style: TextStyle(
+                                          color: Colors.white,
                                   fontSize: 16,
                                   fontWeight: FontWeight.bold
                               ),),
                             Text('P Bal: ',
                               style: TextStyle(
+                                          color: Colors.white,
                                   fontSize: 16,
                                   fontWeight: FontWeight.bold
                               ),),
                             Text('L Bal: ',
                               style: TextStyle(
+                                          color: Colors.white,
                                   fontSize: 16,
                                   fontWeight: FontWeight.bold
                               ),),
                             Text('Amt: ',
                               style: TextStyle(
+                                          color: Colors.white,
                                   fontSize: 16,
                                   fontWeight: FontWeight.bold
                               ),),

@@ -142,4 +142,18 @@
         'active': active,
       };
     }
+    Map<String, dynamic> toMaps() {
+      return {
+        'ID': id,
+        'dist_code': distCode,
+        'pcode': pCode,
+        'cmpcd': cmpCd,
+        'name': name,
+        'tp': tp,
+        'rp': rp,
+        'balance': balance,
+        'grcd': grCd,
+        'active': active,
+      };
+    }
   }

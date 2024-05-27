@@ -3,6 +3,8 @@ import 'package:eorderbook/EOrderBookOrders/SalesDetails/GetInvoiceDetails.dart'
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 
+import '../Alerts/ModifiedBills/ModifiedSaleBills/ModifyBillSummary.dart';
+
 
 class GetInvoices extends StatefulWidget {
   final String mainCode;
@@ -250,32 +252,14 @@ bool loading = true;
                   },
                 ),
               ),
-              isSearching
-                  ? Center(child: CircularProgressIndicator())
-                  : profitinvoices.isEmpty
-                  ? Center(child: Text('No data found'))
-                  :  Card(
-                child: Padding(
-                  padding: EdgeInsets.symmetric(vertical: 5 , horizontal : 60,),
-                  child: Column(
-                    children: [
-                      Text(widget.name,style: TextStyle(fontSize: 18,
-                          fontWeight: FontWeight.bold
-                      ),),
-                      Text('From  ${widget.startDate}   to  ${widget.endDate}',style: TextStyle(fontSize: 18,
-                          fontWeight: FontWeight.bold
-                      ),),
-                    ],
-                  ),
-                ),
-              ),
+
               if (!isLoading && profitinvoices.isNotEmpty)
                 isSearching
                     ? Center(child: CircularProgressIndicator())
                     : profitinvoices.isEmpty
                     ? Center(child: Text('No data found'))
                     : Card(
-                  color: Colors.lightGreenAccent,
+                  color: Colors.green.shade900,
                   child: Padding(
                     padding: const EdgeInsets.only(left: 20 , right: 20 , top: 5, bottom: 5),
                     child: Container(
@@ -285,21 +269,25 @@ bool loading = true;
                         children: [
                            Text('Gross: ',
                                         style: TextStyle(
+                                          color: Colors.white,
                                             fontSize: 16,
                                             fontWeight: FontWeight.bold
                                         ),),
                            Text('D1: ',
                                         style: TextStyle(
+                                          color: Colors.white,
                                             fontSize: 16,
                                             fontWeight: FontWeight.bold
                                         ),),
                            Text('D2: ',
                                         style: TextStyle(
+                                          color: Colors.white,
                                             fontSize: 16,
                                             fontWeight: FontWeight.bold
                                         ),),
                            Text('Net: ',
                                         style: TextStyle(
+                                          color: Colors.white,
                                             fontSize: 16,
                                             fontWeight: FontWeight.bold
                                         ),),
@@ -310,6 +298,7 @@ bool loading = true;
                            //              ),),
                           Text('Cash: ',
                                         style: TextStyle(
+                                          color: Colors.white,
                                             fontSize: 16,
                                             fontWeight: FontWeight.bold
                                         ),),
@@ -331,8 +320,11 @@ bool loading = true;
                       children: [
                         GestureDetector(
                           onTap : (){
-                            Navigator.push(context, MaterialPageRoute(builder: (context) => GetInvoicesDetails(cash: invoice['cash'],salesReturn: invoice['sale_return'],mainCode: widget.mainCode, title: widget.title, name: widget.name, distCode: widget.distCode, type: widget.type, startDate: widget.startDate, endDate: widget.endDate, orderId: invoice['invno'],)));
-                          },
+                            invoice['invtime'] == invoice['modifytime'] ?
+                            Navigator.push(context, MaterialPageRoute(builder: (context) => GetInvoicesDetails(cash: invoice['cash'],salesReturn: invoice['sale_return'],mainCode: widget.mainCode, title: widget.title, name: widget.name, distCode: widget.distCode, type: widget.type, startDate: widget.startDate, endDate: widget.endDate, orderId: invoice['invno'],)))
+                          : Navigator.push(context, MaterialPageRoute(builder: (context) => ModifiedBillSummary(startDate: widget.startDate,endDate: widget.endDate,distCode: widget.distCode,type: selectedType,invno: invoice['invno'],)));
+
+                            },
                           child: Card(
                             child: Column(
                               mainAxisAlignment: MainAxisAlignment.start,
@@ -347,18 +339,21 @@ bool loading = true;
                                   children: [
                                     Text('       Inv# : ${invoice['invno']}',
                                       style: TextStyle(
+                                        color: invoice['invtime'] == invoice['modifytime'] ? Colors.black : Colors.white,
                                           fontSize: 16,
                                           fontWeight: FontWeight.bold
                                       ),),
                                     invoice['code'] == '1001'
                                     ?Text('   Cash',
                                       style: TextStyle(
+                                          color: invoice['invtime'] == invoice['modifytime'] ? Colors.black : Colors.white,
                                           fontSize: 14,
                                           fontWeight: FontWeight.bold
                                       ),)
                                         :Expanded(
                                           child: Text('   ${invoice['name']}',
                                                                               style: TextStyle(
+                                                                                  color: invoice['invtime'] == invoice['modifytime'] ? Colors.black : Colors.white,
                                             fontSize: 14,
                                             fontWeight: FontWeight.bold
                                                                               ),
@@ -371,21 +366,25 @@ bool loading = true;
                                   children: [
                                     Text('${invoice['gross']}',
                                       style: TextStyle(
+                                          color: invoice['invtime'] == invoice['modifytime'] ? Colors.black : Colors.white,
                                           fontSize: 16,
                                           fontWeight: FontWeight.bold
                                       ),),
                                     Text('${invoice['discount1']}',
                                       style: TextStyle(
+                                          color: invoice['invtime'] == invoice['modifytime'] ? Colors.black : Colors.white,
                                           fontSize: 16,
                                           fontWeight: FontWeight.bold
                                       ),),
                                     Text('${invoice['discount2']}',
                                       style: TextStyle(
+                                          color: invoice['invtime'] == invoice['modifytime'] ? Colors.black : Colors.white,
                                           fontSize: 16,
                                           fontWeight: FontWeight.bold
                                       ),),
                                     Text('${invoice['net']}',
                                       style: TextStyle(
+                                          color: invoice['invtime'] == invoice['modifytime'] ? Colors.black : Colors.white,
                                           fontSize: 16,
                                           fontWeight: FontWeight.bold
                                       ),),
@@ -396,6 +395,7 @@ bool loading = true;
                                     //   ),),
                                     Text('${invoice['cash']}',
                                       style: TextStyle(
+                                          color: invoice['invtime'] == invoice['modifytime'] ? Colors.black : Colors.white,
                                           fontSize: 16,
                                           fontWeight: FontWeight.bold
                                       ),),
@@ -403,6 +403,7 @@ bool loading = true;
                                 )
                               ],
                             ),
+                            color: invoice['invtime'] == invoice['modifytime'] ? Colors.white : Colors.red.shade900,
                           ),
                         ),
                       ],

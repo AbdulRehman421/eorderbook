@@ -174,7 +174,7 @@ class ApiService {
     final Map<String, String> requestData = {'dist_code': distCode};
     final String requestBody = json.encode(requestData);
 
-    final response = await http.post(
+    final response = await http.post( 
       Uri.parse('$baseUrl/get_products.php'),
       headers: {'Content-Type': 'application/json'},
       body: requestBody,
@@ -224,22 +224,22 @@ class ApiService {
     }
   }
 
-  Future<void> postOrder(Map<String, dynamic> orderDetails, List<Map<String, dynamic>> productDetails) async {
-    final response = await http.post(
-      Uri.parse('$baseUrl/post_order.php'), // Replace with your API endpoint for posting orders
-      headers: {'Content-Type': 'application/json'},
-      body: json.encode({
-        'orderDetails': orderDetails,
-        'productDetails': productDetails,
-      }),
-    );
-
-    if (response.statusCode == 201) {
-      // Successfully posted order
-    } else {
-      throw Exception('Failed to post order');
-    }
-  }
+  // Future<void> postOrder(Map<String, dynamic> orderDetails, List<Map<String, dynamic>> productDetails) async {
+  //   final response = await http.post(
+  //     Uri.parse('$baseUrl/post_order.php'), // Replace with your API endpoint for posting orders
+  //     headers: {'Content-Type': 'application/json'},
+  //     body: json.encode({
+  //       'orderDetails': orderDetails,
+  //       'productDetails': productDetails,
+  //     }),
+  //   );
+  //
+  //   if (response.statusCode == 201) {
+  //     // Successfully posted order
+  //   } else {
+  //     throw Exception('Failed to post order');
+  //   }
+  // }
 
   Future<bool> postAllOrders(json) async {
     final Uri postOrderUrl = Uri.parse('$baseUrl/post_orders.php');

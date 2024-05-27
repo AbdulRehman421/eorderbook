@@ -1,5 +1,6 @@
 import 'dart:convert';
-import 'package:eorderbook/EOrderBookOrders/SalesDetails/ClosingStock.dart';
+import 'package:eorderbook/EOrderBookOrders/Alerts/AlertHome.dart';
+import 'package:eorderbook/EOrderBookOrders/SalesDetails/Closing%20Stock/ClosingStock.dart';
 import 'package:eorderbook/EOrderBookOrders/SalesDetails/ClosingSummary.dart';
 import 'package:eorderbook/EOrderBookOrders/SalesDetails/GetInvoiceProfit.dart';
 import 'package:eorderbook/EOrderBookOrders/SalesDetails/GetInvoices.dart';
@@ -28,7 +29,12 @@ class SalesProfitDetails extends StatefulWidget {
 }
 
 class _SalesProfitDetailsState extends State<SalesProfitDetails> {
+  List<dynamic> checkdistcode = [];
   List<dynamic> profitinvoices = [];
+  List<dynamic> invoices4 = [];
+  List<dynamic> invoices44 = [];
+  List<dynamic> invoices444 = [];
+  List<dynamic> profitinvoicesN = [];
   List<dynamic> invoices = [];
   List<dynamic> cash = [];
   List<dynamic> payableinvoices = [];
@@ -45,11 +51,133 @@ class _SalesProfitDetailsState extends State<SalesProfitDetails> {
   Future<void> _refreshData() async {
     fetchCStock(widget.distCode);
     fetchProfit(widget.distCode, widget.startDate, widget.endDate);
+    fetchProfitN(widget.distCode, widget.startDate, widget.endDate);
     fetchInvoice(widget.distCode, widget.startDate, widget.endDate);
     fetchCash(widget.distCode, widget.startDate, widget.endDate);
     fetchPayable(widget.distCode, widget.startDate, widget.endDate);
     fetchStock(widget.distCode);
+    fetchSaleReturn4(widget.distCode, widget.startDate, widget.endDate);
+    fetchSaleReturn44(widget.distCode, widget.startDate, widget.endDate);
+    fetchSaleReturn444(widget.distCode, widget.startDate, widget.endDate);
+    checkDistCode(widget.distCode, widget.startDate, widget.endDate);
 
+  }
+
+  Future<void> checkDistCode(String distcode, String startDate, String endDate) async {
+    final url = Uri.parse('https://seasoftsales.com/eorderbook/get_distcode.php?dist_code=$distcode');
+
+    try {
+      final response = await http.get(url);
+
+      if (response.statusCode == 200) {
+        final responseData = json.decode(response.body);
+        setState(() {
+          checkdistcode = responseData;
+          originalInvoices = List.from(checkdistcode); // Store original invoices for resetting
+
+        });
+      } else {
+        throw Exception('Failed to load data');
+      }
+    } catch (error) {
+      print(error);
+    }
+  }
+  Future<void> fetchSaleReturn4(String distcode, String startDate, String endDate) async {
+    final url = Uri.parse('https://seasoftsales.com/eorderbook/get_invoice.php?type=4&dist_code=${widget.distCode}&start_date=$startDate&end_date=$endDate');
+
+    try {
+      final response = await http.get(url);
+
+      if (response.statusCode == 200) {
+        final responseData = json.decode(response.body);
+        setState(() {
+          invoices4 = responseData;
+          originalInvoices = List.from(invoices4); // Store original invoices for resetting
+
+        });
+      } else {
+        throw Exception('Failed to load data');
+      }
+    } catch (error) {
+      print(error);
+    }
+  }
+  Future<void> fetchSaleReturn44(String distcode, String startDate, String endDate) async {
+    final url = Uri.parse('https://seasoftsales.com/eorderbook/get_invoice.php?type=44&dist_code=${widget.distCode}&start_date=$startDate&end_date=$endDate');
+
+    try {
+      final response = await http.get(url);
+
+      if (response.statusCode == 200) {
+        final responseData = json.decode(response.body);
+        setState(() {
+          invoices44 = responseData;
+          originalInvoices = List.from(invoices44); // Store original invoices for resetting
+
+        });
+      } else {
+        throw Exception('Failed to load data');
+      }
+    } catch (error) {
+      print(error);
+    }
+  }
+  Future<void> fetchSaleReturn444(String distcode, String startDate, String endDate) async {
+    final url = Uri.parse('https://seasoftsales.com/eorderbook/get_invoice.php?type=444&dist_code=${widget.distCode}&start_date=$startDate&end_date=$endDate');
+
+    try {
+      final response = await http.get(url);
+
+      if (response.statusCode == 200) {
+        final responseData = json.decode(response.body);
+        setState(() {
+          invoices444 = responseData;
+          originalInvoices = List.from(invoices444); // Store original invoices for resetting
+
+        });
+      } else {
+        throw Exception('Failed to load data');
+      }
+    } catch (error) {
+      print(error);
+    }
+  }
+  double calculatenet4() {
+    double totalOrders = 0.0;
+
+    for (var item in invoices4) {
+      if (item['net'] != null) {
+        double net = double.parse(item['net'].toString());
+        totalOrders += net;
+      }
+    }
+
+    return totalOrders;
+  }
+  double calculatenet44() {
+    double totalOrders = 0.0;
+
+    for (var item in invoices44) {
+      if (item['net'] != null) {
+        double net = double.parse(item['net'].toString());
+        totalOrders += net;
+      }
+    }
+
+    return totalOrders;
+  }
+  double calculatenet444() {
+    double totalOrders = 0.0;
+
+    for (var item in invoices444) {
+      if (item['net'] != null) {
+        double net = double.parse(item['net'].toString());
+        totalOrders += net;
+      }
+    }
+
+    return totalOrders;
   }
   Future<void> fetchPayable(String distcode, String startDate, String endDate) async {
     final url = Uri.parse('https://seasoftsales.com/eorderbook/get_account_balance.php?&dist_code=${widget.distCode}&end_date=$endDate&code=18');
@@ -74,7 +202,7 @@ class _SalesProfitDetailsState extends State<SalesProfitDetails> {
   Future<void> fetchProfit(
       String distcode, String startDate, String endDate) async {
     final url = Uri.parse(
-        'https://seasoftsales.com/eorderbook/get_dist_sale.php?dist_code=${widget.distCode}&start_date=$startDate&end_date=$endDate');
+        'https://seasoftsales.com/eorderbook/get_dist_sale.php?dist_code=${widget.distCode}&start_date=$startDate&end_date=$endDate&retailinv=y');
 
     try {
       final response = await http.get(url);
@@ -83,6 +211,26 @@ class _SalesProfitDetailsState extends State<SalesProfitDetails> {
         final responseData = json.decode(response.body);
         setState(() {
           profitinvoices = responseData;
+        });
+      } else {
+        throw Exception('Failed to load data');
+      }
+    } catch (error) {
+      print(error);
+    }
+  }
+  Future<void> fetchProfitN(
+      String distcode, String startDate, String endDate) async {
+    final url = Uri.parse(
+        'https://seasoftsales.com/eorderbook/get_dist_sale.php?dist_code=${widget.distCode}&start_date=$startDate&end_date=$endDate&retailinv=n');
+
+    try {
+      final response = await http.get(url);
+
+      if (response.statusCode == 200) {
+        final responseData = json.decode(response.body);
+        setState(() {
+          profitinvoicesN = responseData;
         });
       } else {
         throw Exception('Failed to load data');
@@ -265,6 +413,8 @@ class _SalesProfitDetailsState extends State<SalesProfitDetails> {
   @override
   Widget build(BuildContext context) {
     var invoiced = profitinvoices.isNotEmpty ? profitinvoices.first : null;
+    var checkDist = checkdistcode.isNotEmpty ? checkdistcode.first : null;
+    var invoicedN = profitinvoicesN.isNotEmpty ? profitinvoicesN.first : null;
     var invoicep = invoices.isNotEmpty ? invoices.first : null;
     var cashI = cash.isNotEmpty ? cash.first : null;
     var stockExpire = stock.isNotEmpty ? stock.first : null;
@@ -301,6 +451,7 @@ class _SalesProfitDetailsState extends State<SalesProfitDetails> {
                           final invoice = profitinvoices[index];
                           double profit = double.parse(invoicep?['profit'] ?? "0");
                           double sale = double.parse(invoice['sale'] ?? '0');
+                          // double saleN = double.parse(invoicedN['sale'] ?? '');
                           double stocks = double.parse(stockExpire['stock'] ?? '0');
                           double saleReturn =
                               double.parse(invoice['sale_return'] ?? '0');
@@ -339,17 +490,54 @@ class _SalesProfitDetailsState extends State<SalesProfitDetails> {
                                       mainAxisAlignment:
                                           MainAxisAlignment.spaceBetween,
                                       children: [
-                                        Text(
-                                          'Sales :',
-                                          style: TextStyle(
-                                              fontSize: 18,
-                                              fontWeight: FontWeight.bold),
+                                        Row(
+                                          children: [
+                                            Column(
+                                              children: [
+                                                Text('Counter Sale   ',
+                                              style: TextStyle(
+                                                    fontSize: 13,
+                                                  fontWeight: FontWeight.bold),),
+                                                Text('Whole Sale     ',
+                                              style: TextStyle(
+                                                    fontSize: 13,
+                                                  fontWeight: FontWeight.bold),),
+
+                                              ],crossAxisAlignment: CrossAxisAlignment.start,
+                                            ),
+                                            Column(
+                                              children: [
+                                                Text('${sale.toInt()}',
+                                              style: TextStyle(
+                                                    fontSize: 13,
+                                                  fontWeight: FontWeight.bold),),
+                                                Text(
+                                                  '${invoicedN != null ? invoicedN['sale'] ?? '0' : '0'}',
+                                                  style: TextStyle(
+                                                    fontSize: 13,fontWeight: FontWeight.bold),
+                                                ),
+
+
+                                              ],crossAxisAlignment: CrossAxisAlignment.end,
+                                            ),
+                                          ],
                                         ),
-                                        Text(
-                                          invoice['sale'] ?? '',
-                                          style: TextStyle(
-                                              fontSize: 18,
-                                              fontWeight: FontWeight.bold),
+                                        Row(
+                                          children: [
+
+                                            Text(
+                                              'Sales :  ',
+                                              style: TextStyle(
+                                                  fontSize: 18,
+                                                  fontWeight: FontWeight.bold),
+                                            ),
+                                            Text(
+                                              invoice['sale'] ?? '',
+                                              style: TextStyle(
+                                                  fontSize: 18,
+                                                  fontWeight: FontWeight.bold),
+                                            )
+                                          ],
                                         )
                                       ],
                                     ),
@@ -382,24 +570,92 @@ class _SalesProfitDetailsState extends State<SalesProfitDetails> {
                                         horizontal: 20, vertical: 10),
                                     child: Row(
                                       mainAxisAlignment:
-                                          MainAxisAlignment.spaceBetween,
+                                      MainAxisAlignment.spaceBetween,
                                       children: [
-                                        Text(
-                                          'Sales Return :',
-                                          style: TextStyle(
-                                            color: Colors.white,
-                                              fontSize: 18,
-                                              fontWeight: FontWeight.bold),
+                                        Row(
+                                          children: [
+                                            Column(
+                                              children: [
+                                                Text('Counter Sale   ',
+                                                  style: TextStyle(
+                                                    fontSize: 13,
+                                                    color: Colors.white,
+                                                      fontWeight: FontWeight.bold),),
+                                                Text('Whole Sale     ',
+                                                  style: TextStyle(
+                                                    fontSize: 13,
+                                                    color: Colors.white,
+                                                      fontWeight: FontWeight.bold),),
+                                                Text('Open Return     ',
+                                                  style: TextStyle(
+                                                    fontSize: 13,
+                                                    color: Colors.white,
+                                                      fontWeight: FontWeight.bold),),
+
+                                              ],crossAxisAlignment: CrossAxisAlignment.start,
+                                            ),
+                                            Column(
+                                              children: [
+                                                Text('${calculatenet44().toStringAsFixed(0)}',
+                                                  style: TextStyle(
+                                                    fontSize: 13,
+                                                    color: Colors.white,
+                                                      fontWeight: FontWeight.bold),),
+                                                Text('${calculatenet4().toStringAsFixed(0)}',
+                                                  style: TextStyle(
+                                                    fontSize: 13,
+                                                    color: Colors.white,
+                                                      fontWeight: FontWeight.bold),),
+                                                Text('${calculatenet444().toStringAsFixed(0)}',
+                                                  style: TextStyle(
+                                                    fontSize: 13,
+                                                    color: Colors.white,
+                                                      fontWeight: FontWeight.bold),),
+
+                                              ],crossAxisAlignment: CrossAxisAlignment.end,
+                                            ),
+                                          ],
                                         ),
-                                        Text(
-                                          invoice['sale_return'],
-                                          style: TextStyle(
-                                              color: Colors.white,
-                                              fontSize: 18,
-                                              fontWeight: FontWeight.bold),
+                                        Row(
+                                          children: [
+                                            Text(
+                                              'Return :  ',
+                                              style: TextStyle(
+                                                    color: Colors.white,
+                                                  fontSize: 18,
+                                                  fontWeight: FontWeight.bold),
+                                            ),
+                                            Text(
+                                              invoice['sale_return'] ?? '',
+                                              style: TextStyle(
+                                                    color: Colors.white,
+                                                  fontSize: 18,
+                                                  fontWeight: FontWeight.bold),
+                                            )
+                                          ],
                                         )
                                       ],
                                     ),
+                                    // Row(
+                                    //   mainAxisAlignment:
+                                    //       MainAxisAlignment.spaceBetween,
+                                    //   children: [
+                                    //     Text(
+                                    //       'Sales Return :',
+                                    //       style: TextStyle(
+                                    //         color: Colors.white,
+                                    //           fontSize: 18,
+                                    //           fontWeight: FontWeight.bold),
+                                    //     ),
+                                    //     Text(
+                                    //       invoice['sale_return'],
+                                    //       style: TextStyle(
+                                    //           color: Colors.white,
+                                    //           fontSize: 18,
+                                    //           fontWeight: FontWeight.bold),
+                                    //     )
+                                    //   ],
+                                    // ),
                                   ),
                                   color: Colors.redAccent,
                                 ),
@@ -575,7 +831,7 @@ class _SalesProfitDetailsState extends State<SalesProfitDetails> {
                                               fontWeight: FontWeight.bold),
                                         ),
                                         Text(
-                                          '$netPurchase',
+                                          '${netPurchase.toStringAsFixed(2)}',
                                           style: TextStyle(
                                               fontSize: 18,
                                               fontWeight: FontWeight.bold),
@@ -586,8 +842,30 @@ class _SalesProfitDetailsState extends State<SalesProfitDetails> {
                                   color: Colors.lightBlueAccent.shade100,
                                 ),
                               ),
+                              SizedBox(height: 20),
+                              GestureDetector(
+                                onTap: () {
+                                  Navigator.push(context, MaterialPageRoute(builder: (context) => AlertsHome(distCode: widget.distCode,endDate: widget.endDate,startDate: widget.startDate,),));
+                                },
+                                child: Card(
+                                  child: Padding(
+                                    padding: EdgeInsets.symmetric(
+                                        horizontal: 20, vertical: 10),
+                                    child: Center(
+                                      child: Text(
+                                        'A L E R T S',
+                                        style: TextStyle(
+                                          color: Colors.white,
+                                            fontSize: 20,
+                                            fontWeight: FontWeight.bold),
+                                      ),
+                                    ),
+                                  ),
+                                  color: Colors.red,
+                                ),
+                              ),
                               SizedBox(
-                                height: 30,
+                                height: 20,
                               ),
                               Card(
                                 child: Padding(
@@ -721,6 +999,7 @@ class _SalesProfitDetailsState extends State<SalesProfitDetails> {
                               SizedBox(
                                 height: 30,
                               ),
+                              if(checkDist['showaccountsdetail'] == 'Y')
                               GestureDetector(
                                 onTap : (){
                                   Navigator.push(context, MaterialPageRoute(builder: (context) => ClosingSummary(mainCode: widget.mainCode, distCode: widget.distCode, startDate: widget.startDate, endDate: widget.endDate),));
@@ -751,6 +1030,7 @@ class _SalesProfitDetailsState extends State<SalesProfitDetails> {
                                   
                                 ),
                               ),
+                              if(checkDist['showaccountsdetail'] == 'Y')
                               GestureDetector(
                                 onTap : (){
                                   Navigator.push(context,  MaterialPageRoute(builder: (context) => RecievableBalance(mainCode: widget.mainCode, distCode: widget.distCode, startDate: widget.startDate, endDate: widget.endDate),));
@@ -781,6 +1061,7 @@ class _SalesProfitDetailsState extends State<SalesProfitDetails> {
                                   ),
                                 ),
                               ),
+                              if(checkDist['showaccountsdetail'] == 'Y')
                               GestureDetector(
                                 onTap : (){
                                   Navigator.push(context, MaterialPageRoute(builder: (context) => PayabaleBalance(mainCode: widget.mainCode, distCode: widget.distCode, startDate: widget.startDate, endDate: widget.endDate),));

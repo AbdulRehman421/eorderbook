@@ -266,25 +266,6 @@ class _GetInvoicesDetailsState extends State<GetInvoicesDetails> {
                         child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Padding(
-                  padding: EdgeInsets.all(8.0),
-                  child: TextField(
-                    controller: searchController,
-                    decoration: InputDecoration(
-                      labelText: 'Search',
-                      suffixIcon: IconButton(
-                        icon: Icon(Icons.clear),
-                        onPressed: () {
-                          searchController.clear();
-                          searchInvoices('');
-                        },
-                      ),
-                    ),
-                    onChanged: (value) {
-                      searchInvoices(value);
-                    },
-                  ),
-                ),
                 if (!isLoading && profitinvoices.isNotEmpty)
                   Card(
                     child: Padding(
@@ -313,36 +294,6 @@ class _GetInvoicesDetailsState extends State<GetInvoicesDetails> {
                             Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
-                                Text('Address :',style: TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                ),),
-                                Flexible(
-                                  child: Text(
-                                    invoiced['address'] ?? "",style: TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 16
-                                  ),
-                                    overflow: TextOverflow.ellipsis, // Handle overflow
-                                    maxLines: 1, // Limit to a single line
-                                  ),
-                                ),
-                              ],
-                            ),
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Text('Area :',style: TextStyle(
-                                    fontWeight: FontWeight.bold
-                                ),),
-                                Text(invoiced['areaname'] ?? "",style: TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 16
-                                ),)
-                              ],
-                            ),
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
                                 Text('Bill No :',style: TextStyle(
                                     fontWeight: FontWeight.bold
                                 ),),
@@ -358,7 +309,52 @@ class _GetInvoicesDetailsState extends State<GetInvoicesDetails> {
                                 Text('Date :',style: TextStyle(
                                     fontWeight: FontWeight.bold
                                 ),),
-                                Text(invoiced['date(i.invdt)'] ?? "",style: TextStyle(
+                                Text('${invoiced['DATE(i.invdt)']}${invoiced['invtime']}' ?? "",style: TextStyle(
+                                    fontWeight: FontWeight.bold
+                                ),)
+                              ],
+                            ),
+                            if(invoiced['date(i.modifydate)'] != '2000-01-01')
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Text('Modify Date :',style: TextStyle(
+                                    fontWeight: FontWeight.bold
+                                ),),
+                                Text('${invoiced['date(i.modifydate)']}${invoiced['modifytime']}' ?? "",style: TextStyle(
+                                    fontWeight: FontWeight.bold
+                                ),)
+                              ],
+                            ),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Text('Computer :',style: TextStyle(
+                                    fontWeight: FontWeight.bold
+                                ),),
+                                Text('${invoiced['computer']}' ?? "",style: TextStyle(
+                                    fontWeight: FontWeight.bold
+                                ),)
+                              ],
+                            ),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Text('Operator :',style: TextStyle(
+                                    fontWeight: FontWeight.bold
+                                ),),
+                                Text('${invoiced['operator']}' ?? "",style: TextStyle(
+                                    fontWeight: FontWeight.bold
+                                ),)
+                              ],
+                            ),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Text('SalesMan :',style: TextStyle(
+                                    fontWeight: FontWeight.bold
+                                ),),
+                                Text('${invoiced['smanName']}' ?? "",style: TextStyle(
                                     fontWeight: FontWeight.bold
                                 ),)
                               ],
@@ -370,7 +366,7 @@ class _GetInvoicesDetailsState extends State<GetInvoicesDetails> {
                   ),
                 if (!isLoading && profitinvoices.isNotEmpty)
                   Card(
-                    color: Colors.lightGreenAccent,
+                    color: Colors.green.shade900,
                     child: Padding(
                       padding: const EdgeInsets.only(left: 20 , right: 20 , top: 5, bottom: 5),
                       child: Container(
@@ -380,39 +376,46 @@ class _GetInvoicesDetailsState extends State<GetInvoicesDetails> {
                           children: [
                             Text('Rate: ',
                               style: TextStyle(
+                                          color: Colors.white,
                                   fontSize: 16,
                                   fontWeight: FontWeight.bold
                               ),),
                             Text('Qty: ',
                               style: TextStyle(
+                                          color: Colors.white,
                                   fontSize: 16,
                                   fontWeight: FontWeight.bold
                               ),),
                             Text('Net: ',
                               style: TextStyle(
+                                          color: Colors.white,
                                   fontSize: 16,
                                   fontWeight: FontWeight.bold
                               ),),
                             widget.title == "Gross Profit"
                         ?Text('Pur Value:',
                         style: TextStyle(
+                                          color: Colors.white,
                             fontSize: 16,
                             fontWeight: FontWeight.bold
                         ),)
                             :Text('Dip1: ',
                               style: TextStyle(
+                                          color: Colors.white,
                                   fontSize: 16,
                                   fontWeight: FontWeight.bold
                               ),),
                             widget.title == "Gross Profit"
                                 ?Text('Profit:',
                               style: TextStyle(
+                                          color: Colors.white,
                                   fontSize: 16,
                                   fontWeight: FontWeight.bold
                               ),)
                                 :
                             Text('Dip2: ',
                               style: TextStyle(
+                                          color: Colors.white,
                                   fontSize: 16,
                                   fontWeight: FontWeight.bold
                               ),),
