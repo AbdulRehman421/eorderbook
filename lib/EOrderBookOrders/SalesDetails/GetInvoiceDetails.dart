@@ -424,6 +424,7 @@ class _GetInvoicesDetailsState extends State<GetInvoicesDetails> {
                                   widget.title == "Gross Profit"
                                   ? '%age: ' : '',
                               style: TextStyle(
+                                  color: Colors.white,
                                   fontSize: 16,
                                   fontWeight: FontWeight.bold
                               ),),
@@ -447,11 +448,11 @@ class _GetInvoicesDetailsState extends State<GetInvoicesDetails> {
                       final double net = invoice['net'] != null ? double.parse(invoice['net']) : 0.0;
 
                       final purchase = (qty + bonus) * pcrt;
-                      final percentageValue = (profit / net ) * 100;
                       final gross = qty * rate;
                       final d1 = gross * dip1 / 100;
                       final d2 = (gross - d1) * dip2 / 100;
                       final netValue = gross - d1 - d2;
+                      final percentageValue = (profit / netValue ) * 100;
                       return Column(
                         children: [
                           Card(

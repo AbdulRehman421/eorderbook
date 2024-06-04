@@ -6,6 +6,7 @@ import 'package:eorderbook/models/account.dart';
 import 'package:eorderbook/models/area.dart';
 import 'package:eorderbook/models/product.dart';
 import 'package:eorderbook/models/sector.dart';
+import 'package:eorderbook/screens/ProductAutoComplete.dart';
 import 'package:eorderbook/screens/login_screen.dart';
 import 'package:eorderbook/screens/reselect_products_screen.dart';
 import 'package:eorderbook/screens/select_sector_and_area_screen.dart';

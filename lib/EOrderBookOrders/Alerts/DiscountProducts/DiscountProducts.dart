@@ -92,6 +92,8 @@ class _DiscountedProductsState extends State<DiscountedProducts> {
             // profitinvoices.sort((a, b) => a['srno'].compareTo(b['srno']));
             final invoice = profitinvoices[index];
 
+            final double dip1 = invoice['dip1'] != null ? double.parse(invoice['dip1']) : 0.0;
+            final double dip2 = invoice['dip2'] != null ? double.parse(invoice['dip2']) : 0.0;
             // Check if it is the first item of a new group
             // final bool isNewGroup = index == 0 || invoice['srno'] != profitinvoices[index - 1]['srno'];
 
@@ -264,11 +266,14 @@ class _DiscountedProductsState extends State<DiscountedProducts> {
                           ),
                           Text(
                             '${invoice['dip1']}',
-                            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                            style: TextStyle(
+                                color: dip1 > 0 ? Colors.red : Colors.black,fontSize: 16, fontWeight: FontWeight.bold),
                           ),
                           Text(
                             '${invoice['dip2']}',
-                            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                            style: TextStyle(
+                                color: dip2 > 0 ? Colors.red : Colors.black,
+                                fontSize: 16, fontWeight: FontWeight.bold),
                           ),
                         ],
                       ),

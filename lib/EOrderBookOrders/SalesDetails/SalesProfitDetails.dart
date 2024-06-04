@@ -412,6 +412,7 @@ class _SalesProfitDetailsState extends State<SalesProfitDetails> {
 
   @override
   Widget build(BuildContext context) {
+    print('dd ${widget.distCode}');
     var invoiced = profitinvoices.isNotEmpty ? profitinvoices.first : null;
     var checkDist = checkdistcode.isNotEmpty ? checkdistcode.first : null;
     var invoicedN = profitinvoicesN.isNotEmpty ? profitinvoicesN.first : null;
@@ -451,6 +452,7 @@ class _SalesProfitDetailsState extends State<SalesProfitDetails> {
                           final invoice = profitinvoices[index];
                           double profit = double.parse(invoicep?['profit'] ?? "0");
                           double sale = double.parse(invoice['sale'] ?? '0');
+                          // double invoiceSale = double.parse(invoicedN['sale'] ?? '0');
                           // double saleN = double.parse(invoicedN['sale'] ?? '');
                           double stocks = double.parse(stockExpire['stock'] ?? '0');
                           double saleReturn =

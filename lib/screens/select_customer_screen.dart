@@ -1,6 +1,7 @@
 import 'package:eorderbook/models/account.dart';
 import 'package:eorderbook/models/area.dart';
 import 'package:eorderbook/models/sector.dart';
+import 'package:eorderbook/screens/ProductAutoComplete.dart';
 import 'package:eorderbook/screens/invoice_list_screen.dart';
 import 'package:eorderbook/screens/select_products_screen.dart';
 import 'package:eorderbook/widgets/ConstantWidget.dart';
@@ -303,24 +304,24 @@ class _SelectCustomerScreenState extends State<SelectCustomerScreen> {
                                         if (checkLicExpDate == 'N') {
                                           // Navigate to next screen directly if checkLicExpDate is 'Y'
                                           Navigator.push(
-                                            context,
-                                            MaterialPageRoute(
-                                              builder: (context) =>
-                                                  SelectProductsScreen(
-                                                customer: _searchResult[index],
-                                                area: widget.areaId,
-                                                sector: widget.sectorId,
-                                              ),
-                                            ),
-                                          );
+                                              context,
+                                              MaterialPageRoute(
+                                                builder: (context) =>
+                                                    ProductAutoComplete(
+                                                  customer: items[index],
+                                                  area: widget.areaId,
+                                                  sector: widget.sectorId,
+                                                ),
+                                              ));
                                         } else {
                                           DateTime licenseExpirationDate;
                                           try {
                                             // Parsing the license expiration date
                                             licenseExpirationDate =
-                                                DateTime.parse(_searchResult[index]
-                                                    .lic_exp_date
-                                                    .toString());
+                                                DateTime.parse(
+                                                    _searchResult[index]
+                                                        .lic_exp_date
+                                                        .toString());
                                           } catch (e) {
                                             print(
                                                 'Error parsing license expiration date: $e');
@@ -371,19 +372,20 @@ class _SelectCustomerScreenState extends State<SelectCustomerScreen> {
                                                           Navigator.pop(
                                                               context);
                                                           Navigator.push(
-                                                            context,
-                                                            MaterialPageRoute(
-                                                              builder: (context) =>
-                                                                  SelectProductsScreen(
-                                                                customer: _searchResult[
-                                                                    index],
-                                                                area: widget
-                                                                    .areaId,
-                                                                sector: widget
-                                                                    .sectorId,
-                                                              ),
-                                                            ),
-                                                          );
+                                                              context,
+                                                              MaterialPageRoute(
+                                                                builder:
+                                                                    (context) =>
+                                                                        ProductAutoComplete(
+                                                                  customer:
+                                                                      items[
+                                                                          index],
+                                                                  area: widget
+                                                                      .areaId,
+                                                                  sector: widget
+                                                                      .sectorId,
+                                                                ),
+                                                              ));
                                                         },
                                                       ),
                                                       TextButton(
@@ -399,16 +401,15 @@ class _SelectCustomerScreenState extends State<SelectCustomerScreen> {
                                               );
                                             } else {
                                               Navigator.push(
-                                                context,
-                                                MaterialPageRoute(
-                                                  builder: (context) =>
-                                                      SelectProductsScreen(
-                                                    customer: _searchResult[index],
-                                                    area: widget.areaId,
-                                                    sector: widget.sectorId,
-                                                  ),
-                                                ),
-                                              );
+                                                  context,
+                                                  MaterialPageRoute(
+                                                    builder: (context) =>
+                                                        ProductAutoComplete(
+                                                      customer: items[index],
+                                                      area: widget.areaId,
+                                                      sector: widget.sectorId,
+                                                    ),
+                                                  ));
                                             }
                                           }
                                         }
@@ -416,7 +417,8 @@ class _SelectCustomerScreenState extends State<SelectCustomerScreen> {
                                       child: Card(
                                         color: _searchResult[index].cardColor,
                                         child: Padding(
-                                          padding: const EdgeInsets.only(left: 16),
+                                          padding:
+                                              const EdgeInsets.only(left: 16),
                                           child: Row(
                                             mainAxisAlignment:
                                                 MainAxisAlignment.end,
@@ -437,7 +439,8 @@ class _SelectCustomerScreenState extends State<SelectCustomerScreen> {
                                                           fontWeight:
                                                               FontWeight.bold),
                                                     ),
-                                                    Text(_searchResult[index].address),
+                                                    Text(_searchResult[index]
+                                                        .address),
                                                   ],
                                                 ),
                                               ),
@@ -463,16 +466,15 @@ class _SelectCustomerScreenState extends State<SelectCustomerScreen> {
                                         if (checkLicExpDate == 'N') {
                                           // Navigate to next screen directly if checkLicExpDate is 'Y'
                                           Navigator.push(
-                                            context,
-                                            MaterialPageRoute(
-                                              builder: (context) =>
-                                                  SelectProductsScreen(
-                                                customer: items[index],
-                                                area: widget.areaId,
-                                                sector: widget.sectorId,
-                                              ),
-                                            ),
-                                          );
+                                              context,
+                                              MaterialPageRoute(
+                                                builder: (context) =>
+                                                    ProductAutoComplete(
+                                                  customer: items[index],
+                                                  area: widget.areaId,
+                                                  sector: widget.sectorId,
+                                                ),
+                                              ));
                                         } else {
                                           DateTime licenseExpirationDate;
                                           try {
@@ -531,19 +533,20 @@ class _SelectCustomerScreenState extends State<SelectCustomerScreen> {
                                                           Navigator.pop(
                                                               context);
                                                           Navigator.push(
-                                                            context,
-                                                            MaterialPageRoute(
-                                                              builder: (context) =>
-                                                                  SelectProductsScreen(
-                                                                customer: items[
-                                                                    index],
-                                                                area: widget
-                                                                    .areaId,
-                                                                sector: widget
-                                                                    .sectorId,
-                                                              ),
-                                                            ),
-                                                          );
+                                                              context,
+                                                              MaterialPageRoute(
+                                                                builder:
+                                                                    (context) =>
+                                                                        ProductAutoComplete(
+                                                                  customer:
+                                                                      items[
+                                                                          index],
+                                                                  area: widget
+                                                                      .areaId,
+                                                                  sector: widget
+                                                                      .sectorId,
+                                                                ),
+                                                              ));
                                                         },
                                                       ),
                                                       TextButton(
@@ -559,16 +562,15 @@ class _SelectCustomerScreenState extends State<SelectCustomerScreen> {
                                               );
                                             } else {
                                               Navigator.push(
-                                                context,
-                                                MaterialPageRoute(
-                                                  builder: (context) =>
-                                                      SelectProductsScreen(
-                                                    customer: items[index],
-                                                    area: widget.areaId,
-                                                    sector: widget.sectorId,
-                                                  ),
-                                                ),
-                                              );
+                                                  context,
+                                                  MaterialPageRoute(
+                                                    builder: (context) =>
+                                                        ProductAutoComplete(
+                                                      customer: items[index],
+                                                      area: widget.areaId,
+                                                      sector: widget.sectorId,
+                                                    ),
+                                                  ));
                                             }
                                           }
                                         }
@@ -599,7 +601,14 @@ class _SelectCustomerScreenState extends State<SelectCustomerScreen> {
                                                           fontWeight:
                                                               FontWeight.bold),
                                                     ),
-                                                    Text(items[index].address),
+                                                    Row(
+                                                      children: [
+                                                        Text(items[index]
+                                                            .address),
+                                                        Text(items[index]
+                                                            .lic_exp_date),
+                                                      ],
+                                                    ),
                                                   ],
                                                 ),
                                               ),

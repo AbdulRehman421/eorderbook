@@ -315,44 +315,44 @@ class _AlertsHomeState extends State<AlertsHome> {
               ),
             ),
             SizedBox(height: 20),
-            GestureDetector(
-              onTap: () {},
-              child: Card(
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Padding(
-                      padding: EdgeInsets.symmetric(horizontal: 40, vertical: 10),
-                      child: Text(
-                        'Profit < ',
-                        style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-                      ),
-                    ),
-                    InkWell(
-                      child: Row(
-                        children: [
-                          Text('$lowProfit  %',
-                            style: TextStyle(
-                                color: Colors.red.shade700,
-                                fontSize: 20,
-                                fontWeight: FontWeight.bold),),
-                        ],
-                      ),
-                      onTap: () {
-                        _openDialogProfit();
-                      },
-                    ),
-                    Padding(
-                      padding: EdgeInsets.symmetric(horizontal: 40, vertical: 10),
-                      child: Text(
-                        '${profitinvoices3['total_products'] ?? '0'}',
-                        style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
+            // GestureDetector(
+            //   onTap: () {},
+            //   child: Card(
+            //     child: Row(
+            //       mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            //       children: [
+            //         Padding(
+            //           padding: EdgeInsets.symmetric(horizontal: 40, vertical: 10),
+            //           child: Text(
+            //             'Profit < ',
+            //             style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+            //           ),
+            //         ),
+            //         InkWell(
+            //           child: Row(
+            //             children: [
+            //               Text('$lowProfit  %',
+            //                 style: TextStyle(
+            //                     color: Colors.red.shade700,
+            //                     fontSize: 20,
+            //                     fontWeight: FontWeight.bold),),
+            //             ],
+            //           ),
+            //           onTap: () {
+            //             _openDialogProfit();
+            //           },
+            //         ),
+            //         Padding(
+            //           padding: EdgeInsets.symmetric(horizontal: 40, vertical: 10),
+            //           child: Text(
+            //             '${profitinvoices3['total_products'] ?? '0'}',
+            //             style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+            //           ),
+            //         ),
+            //       ],
+            //     ),
+            //   ),
+            // ),
           ],
         ),
       ),
