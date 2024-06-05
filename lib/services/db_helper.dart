@@ -311,6 +311,13 @@ class DatabaseHelper {
 
     return jsonOrders;
   }
+  Future<List<Account>> getAccounts() async {
+    final Database db = await database;
+    final List<Map<String, dynamic>> maps = await db.query('account');
+    return List.generate(maps.length, (i) {
+      return Account.fromMap(maps[i]);
+    });
+  }
   Future<List<Product>> getProducts() async {
     final Database db = await database;
     final List<Map<String, dynamic>> maps = await db.query('product');

@@ -47,7 +47,6 @@ class _ProductAutoCompleteState extends State<ProductAutoComplete> {
   }
   bool showPositiveBalanceOnly = true;
   bool searchFromStart = true;
-  bool searchRefresh = true;
   bool searchOnTap = false;
   int generatedInvoiceId = 0;
   Future<void> getInvoiceId() async {
@@ -89,7 +88,7 @@ class _ProductAutoCompleteState extends State<ProductAutoComplete> {
       showSelected = prefs.getBool('showSelected') ?? true;
       showPositiveBalanceOnly = prefs.getBool('showPositiveBalanceOnly') ?? true;
       searchFromStart = prefs.getBool('searchFromStart') ?? true;
-      searchRefresh = prefs.getBool('searchRefresh') ?? true;
+      // searchRefresh = prefs.getBool('searchRefresh') ?? true;
       // searchThreeDigit = prefs.getBool('searchThreeDigit') ?? true;
       searchOnTap = prefs.getBool('searchOnTap') ?? false;
     });
@@ -100,7 +99,7 @@ class _ProductAutoCompleteState extends State<ProductAutoComplete> {
     prefs.setBool('showSelected', showSelected);
     prefs.setBool('showPositiveBalanceOnly', showPositiveBalanceOnly);
     prefs.setBool('searchFromStart', searchFromStart);
-    prefs.setBool('searchRefresh', searchRefresh);
+    // prefs.setBool('searchRefresh', searchRefresh);
     // prefs.setBool('searchThreeDigit', searchThreeDigit);
     prefs.setBool('searchOnTap', searchOnTap);
   }
@@ -179,6 +178,8 @@ class _ProductAutoCompleteState extends State<ProductAutoComplete> {
     super.initState();
     _databaseHelper = DatabaseHelper.instance;
     getInvoiceId();
+
+    loadPreferences();
   }
   void showEditProductDialog(BuildContext context, Product product, int index) {
     var countQuantity = product.quantity;
@@ -462,16 +463,10 @@ class _ProductAutoCompleteState extends State<ProductAutoComplete> {
 
                         totalPrice = Product.getTotal(selectedProducts);
 
-                        if(searchRefresh == false) {
                           _controller.clear();
                           // FocusManager.instance.primaryFocus;
                           FocusManager.instance.primaryFocus
                               ?.hasPrimaryFocus;
-                        }else{
-                          setState(() {
-                            _controller.clear();
-                          });
-                        }
                           setState(() {});
 
                         Navigator.pop(context);
@@ -906,17 +901,28 @@ class _ProductAutoCompleteState extends State<ProductAutoComplete> {
                                     Row(
                                       children: [
                                         Expanded(
-                                          child: Text(
-                                            _products[index].name +
-                                                "        " +
-                                                _products[index].pCode +
-                                                '(${_products[index].balance})',
-                                            style: TextStyle(
-                                                color: _products[index].selected
-                                                    ? Colors.white
-                                                    : Colors.black,
-                                                fontSize: 13,
-                                                fontWeight: FontWeight.bold),
+                                          child: Row(
+                                            children: [
+                                              Text(
+                                                _products[index].name +
+                                                    "        " +
+                                                    _products[index].pCode,
+                                                style: TextStyle(
+                                                    color: _products[index].selected
+                                                        ? Colors.white
+                                                        : Colors.black,
+                                                    fontSize: 13,
+                                                    fontWeight: FontWeight.bold),
+                                              ),
+                                              Text('Bal : ${_products[index].balance}  ',
+                                                style: TextStyle(
+                                                    color: _products[index].selected
+                                                        ? Colors.white
+                                                        : Colors.black,
+                                                    fontSize: 13,
+                                                    fontWeight: FontWeight.bold),)
+                                            ],
+                                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                           ),
                                         ),
                                       ],
@@ -975,12 +981,13 @@ class _ProductAutoCompleteState extends State<ProductAutoComplete> {
                                         Row(
                                           children: [
                                             Text(
-                                              'Bns:',
+                                              'O-Bns:',
                                               style: TextStyle(
                                                   color: _products[index].selected
                                                       ? Colors.white
                                                       : Colors.black,
-                                                  fontSize: 13),
+                                                  fontSize: 13,
+                                                  fontWeight: FontWeight.bold),
                                             ),
                                             Padding(
                                               padding: const EdgeInsets.symmetric(
@@ -992,7 +999,8 @@ class _ProductAutoCompleteState extends State<ProductAutoComplete> {
                                                         .selected
                                                         ? Colors.white
                                                         : Colors.black,
-                                                    fontSize: 13),
+                                                    fontSize: 13,
+                                                    fontWeight: FontWeight.bold),
                                               ),
                                             ),
                                           ],
@@ -1000,12 +1008,13 @@ class _ProductAutoCompleteState extends State<ProductAutoComplete> {
                                         Row(
                                           children: [
                                             Text(
-                                              'Qty:',
+                                              'O-Qty:',
                                               style: TextStyle(
                                                   color: _products[index].selected
                                                       ? Colors.white
                                                       : Colors.black,
-                                                  fontSize: 13),
+                                                  fontSize: 13,
+                                                  fontWeight: FontWeight.bold),
                                             ),
                                             Padding(
                                               padding: const EdgeInsets.symmetric(
@@ -1017,7 +1026,8 @@ class _ProductAutoCompleteState extends State<ProductAutoComplete> {
                                                         .selected
                                                         ? Colors.white
                                                         : Colors.black,
-                                                    fontSize: 13),
+                                                    fontSize: 13,
+                                                    fontWeight: FontWeight.bold),
                                               ),
                                             ),
                                           ],
@@ -1124,95 +1134,150 @@ class _ProductAutoCompleteState extends State<ProductAutoComplete> {
   }
   Widget productItem(List<Product> selectedProducts, int index) {
     return Card(
-      margin: const EdgeInsets.symmetric(vertical: 3, horizontal: 6),
-      child: ListTile(
-        // contentPadding: const EdgeInsets.all(12),
-        selected: selectedProducts[index].selected,
-        selectedTileColor: Colors.green,
-        selectedColor: Colors.white,
-        title: Row(
-          mainAxisSize: MainAxisSize.max,
-          mainAxisAlignment: MainAxisAlignment.start,
-          crossAxisAlignment: CrossAxisAlignment.center,
+      color: selectedProducts[index].selected ? Colors.green : Colors
+          .white,
+      child: Padding(
+        padding: EdgeInsets.only(left: 16),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.end,
+          crossAxisAlignment: CrossAxisAlignment.end,
           children: [
             Expanded(
               child: Column(
+                mainAxisAlignment: MainAxisAlignment.start,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Row(
                     children: [
                       Expanded(
-                        child: Text(
-                          "${selectedProducts[index].name} ${selectedProducts[index].pCode}(${selectedProducts[index].balance})",
-                          style: const TextStyle(fontSize: 13),
+                        child: Row(
+                          children: [
+                            Text(
+                              selectedProducts[index].name +
+                                  "        " +
+                                  selectedProducts[index].pCode,
+                              style: TextStyle(
+                                  color: selectedProducts[index].selected
+                                      ? Colors.white
+                                      : Colors.black,
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.bold),
+                            ),
+                            Text('Bal : ${selectedProducts[index].balance}  ',
+                              style: TextStyle(
+                                  color: selectedProducts[index].selected
+                                      ? Colors.white
+                                      : Colors.black,
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.bold),)
+                          ],
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         ),
                       ),
                     ],
                   ),
                   Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisAlignment: MainAxisAlignment
+                        .spaceBetween,
+                    crossAxisAlignment: CrossAxisAlignment
+                        .start,
                     children: [
                       Row(
                         children: [
-                          const Text(
+                          Text(
                             'Price:',
-                            style: TextStyle(fontSize: 13),
+                            style: TextStyle(
+                                color: selectedProducts[index].selected
+                                    ? Colors.white
+                                    : Colors.black,
+                                fontSize: 13),
                           ),
-                          Padding(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 12.0, vertical: 4),
-                            child: Text(
-                              '${selectedProducts[index].tp}',
-                              style: const TextStyle(fontSize: 13),
-                            ),
+                          Text(
+                            '${selectedProducts[index].tp}',
+                            style: TextStyle(
+                                color: selectedProducts[index].selected
+                                    ? Colors.white
+                                    : Colors.black,
+                                fontSize: 13),
                           ),
                         ],
                       ),
                       Row(
                         children: [
-                          const Text(
+                          Text(
                             'Disc:',
-                            style: TextStyle(fontSize: 13),
+                            style: TextStyle(
+                                color: selectedProducts[index].selected
+                                    ? Colors.white
+                                    : Colors.black,
+                                fontSize: 13),
                           ),
                           Padding(
                             padding: const EdgeInsets.symmetric(
                                 horizontal: 12.0, vertical: 4),
                             child: Text(
                               '${selectedProducts[index].discount}',
-                              style: const TextStyle(fontSize: 13),
+                              style: TextStyle(
+                                  color: selectedProducts[index]
+                                      .selected
+                                      ? Colors.white
+                                      : Colors.black,
+                                  fontSize: 13),
                             ),
                           ),
                         ],
                       ),
                       Row(
                         children: [
-                          const Text(
-                            'Bns:',
-                            style: TextStyle(fontSize: 13),
+                          Text(
+                            'O-Bns:',
+                            style: TextStyle(
+                                color: selectedProducts[index].selected
+                                    ? Colors.white
+                                    : Colors.black,
+                                fontSize: 13,
+                                fontWeight: FontWeight.bold),
                           ),
                           Padding(
                             padding: const EdgeInsets.symmetric(
                                 horizontal: 12.0, vertical: 4),
                             child: Text(
                               '${selectedProducts[index].bonus}',
-                              style: const TextStyle(fontSize: 13),
+                              style: TextStyle(
+                                  color: selectedProducts[index]
+                                      .selected
+                                      ? Colors.white
+                                      : Colors.black,
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.bold),
                             ),
                           ),
                         ],
                       ),
                       Row(
                         children: [
-                          const Text(
-                            'Qty:',
-                            style: TextStyle(fontSize: 13),
+                          Text(
+                            'O-Qty:',
+                            style: TextStyle(
+                                color: selectedProducts[index].selected
+                                    ? Colors.white
+                                    : Colors.black,
+                                fontSize: 13,
+                              fontWeight: FontWeight.bold
+                            ),
                           ),
                           Padding(
                             padding: const EdgeInsets.symmetric(
                                 horizontal: 12.0, vertical: 4),
                             child: Text(
                               '${selectedProducts[index].quantity}',
-                              style: const TextStyle(fontSize: 13),
+                              style: TextStyle(
+                                  color: selectedProducts[index]
+                                      .selected
+                                      ? Colors.white
+                                      : Colors.black,
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.bold),
                             ),
                           ),
                         ],
@@ -1222,24 +1287,25 @@ class _ProductAutoCompleteState extends State<ProductAutoComplete> {
                 ],
               ),
             ),
+            const SizedBox(width: 10),
             Column(
               children: [
                 const SizedBox(
                   height: 6,
                 ),
-                const SizedBox(
-                  height: 6,
-                ),
-                !selectedProducts[index].selected
+                !_products[index].selected
                     ? Container()
-                    : GestureDetector(
-                  onTap: () async {
-                    showSelectedWarningAlert(context, index, 0);
-                  },
-                  child: const CircleAvatar(
-                    maxRadius: 16,
-                    backgroundColor: Colors.red,
-                    child: Icon(
+                    : CircleAvatar(
+                  maxRadius: 16,
+                  backgroundColor: Colors.red,
+                  child: GestureDetector(
+                    onTap: () async {
+                      showSearchWarningAlert(
+                          context,
+                          index,
+                          0);
+                    },
+                    child: const Icon(
                       Icons.remove,
                       size: 18,
                       color: Colors.white,
@@ -1497,20 +1563,6 @@ class _ProductAutoCompleteState extends State<ProductAutoComplete> {
                     onChanged: (value) {
                       stateSetter(() {
                         searchFromStart = value;
-                        savePreferences();
-                        setState(() {});
-                      });
-                    },
-                  ),
-                ),
-                Divider(),
-                ListTile(
-                  title: Text('Search Refresh'),
-                  trailing: CupertinoSwitch(
-                    value: searchRefresh,
-                    onChanged: (value) {
-                      stateSetter(() {
-                        searchRefresh = value;
                         savePreferences();
                         setState(() {});
                       });

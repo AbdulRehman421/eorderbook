@@ -434,13 +434,15 @@ class _SelectCustomerScreenState extends State<SelectCustomerScreen> {
                                                   children: [
                                                     Text(
                                                       _searchResult[index].name,
-                                                      style: const TextStyle(
+                                                      style:  TextStyle(
+                                                          color: _searchResult[index].cardColor != null ? Colors.white : Colors.black,
                                                           fontSize: 14,
                                                           fontWeight:
                                                               FontWeight.bold),
                                                     ),
                                                     Text(_searchResult[index]
-                                                        .address),
+                                                        .address , style: TextStyle(
+                                                      color: _searchResult[index].cardColor != null ? Colors.white : Colors.black,),),
                                                   ],
                                                 ),
                                               ),
@@ -596,17 +598,27 @@ class _SelectCustomerScreenState extends State<SelectCustomerScreen> {
                                                   children: [
                                                     Text(
                                                       items[index].name,
-                                                      style: const TextStyle(
+                                                      style:  TextStyle(
+                                                        color: items[index].cardColor != null ? Colors.white : Colors.black,
                                                           fontSize: 14,
                                                           fontWeight:
                                                               FontWeight.bold),
                                                     ),
                                                     Row(
+                                                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                                       children: [
                                                         Text(items[index]
-                                                            .address),
-                                                        Text(items[index]
-                                                            .lic_exp_date),
+                                                            .address , style: TextStyle(
+                                                          color: items[index].cardColor != null ? Colors.white : Colors.black,
+                                                        ),),
+                                                        Text('Lic Exp : ${items[index].lic_exp_date}  ' ,style: TextStyle(
+
+                                                          color: items[index].cardColor != null ? Colors.white  : DateTime.parse(items[index]
+                                                              .lic_exp_date
+                                                              .toString())
+                                                              .isBefore(DateTime.now())
+                                                              ? Colors.red
+                                                              : Colors.black, fontWeight: FontWeight.bold),),
                                                       ],
                                                     ),
                                                   ],
