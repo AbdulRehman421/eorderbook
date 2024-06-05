@@ -118,7 +118,6 @@ class _SelectSectorAndAreaScreenState extends State<SelectSectorAndAreaScreen> {
                         if(selectedArea!=areas[0]){
                           Navigator.push(context, MaterialPageRoute(builder: (context) =>  SelectCustomerScreen(sectorId: selected,areaId: selectedArea,)));
                         }
-
                       });
                     },
                     items: areas.map<DropdownMenuItem<Area>>((Area value) {
