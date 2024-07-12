@@ -301,7 +301,7 @@ class _OrderDetailsState extends State<OrderDetails> {
             ),
           if (!isLoading && orderData.isEmpty)
             Center(
-              heightFactor: 2,
+              heightFactor: 1.5,
               child: Lottie.asset(kIsWeb
                   ? 'not_found_data.json'
                   : 'assets/not_found_data.json'),

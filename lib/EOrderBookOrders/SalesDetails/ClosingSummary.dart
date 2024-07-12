@@ -1,8 +1,6 @@
 import 'dart:convert';
 import 'package:eorderbook/EOrderBookOrders/SalesDetails/CashIn.dart';
 import 'package:eorderbook/EOrderBookOrders/SalesDetails/CashOut.dart';
-import 'package:eorderbook/EOrderBookOrders/SalesDetails/GetInvoiceProfit.dart';
-import 'package:eorderbook/EOrderBookOrders/SalesDetails/GetInvoices.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 

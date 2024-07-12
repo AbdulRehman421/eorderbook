@@ -5,6 +5,7 @@ import 'package:eorderbook/EOrderBookOrders/OrderDetailLogin/OrderDetailScreenby
 import 'package:eorderbook/EOrderBookOrders/OrderDetailLogin/ordermapsbylogin.dart';
 import 'package:eorderbook/models/user.dart';
 import 'package:eorderbook/screens/login_screen.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter/material.dart';
@@ -31,6 +32,32 @@ class _OrderDetailsLoginState extends State<OrderDetailsLogin> {
   void dispose(){
     super.dispose();
   }
+  Future<bool> showLogoutDialog(BuildContext context) async {
+    return await showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text("Logout Confirmation"),
+          content: const Text("Are you sure to logout from this account?"),
+          actions: <Widget>[
+            TextButton(
+              child: const Text("CANCEL"),
+              onPressed: () {
+                Navigator.of(context).pop(false);
+              },
+            ),
+            TextButton(
+              child: const Text("YES"),
+              onPressed: () {
+                Navigator.of(context).pop(true);
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
 
   Future<void> _refreshData() async {
     try {
@@ -94,7 +121,7 @@ class _OrderDetailsLoginState extends State<OrderDetailsLogin> {
     final String requestBody = json.encode(requestData);
 
     final response = await http.post(
-      Uri.parse('https://seasoftsales.com/eorderbook/get_product_name.php/$distCode'),
+      Uri.parse('https://seasoftsales.com/eorderbook/get_users.php/$distCode'),
       headers: {'Content-Type': 'application/json'},
       body: requestBody,
     );
@@ -119,8 +146,7 @@ class _OrderDetailsLoginState extends State<OrderDetailsLogin> {
     List<Map<String, dynamic>> userMaps = await database.query('users');
     List<User> userList = userMaps.map((userMap) => User.fromMap(userMap)).toList();
 
-    // Filter users based on the eorderbook field
-    List<User> filteredUsers = userList.where((user) => user.eOrderBookUser == 1 || user.eOrderBookUser == 2).toList();
+    List<User> filteredUsers = userList.where((user) => user.eOrderBookUser == 1 || user.eOrderBookUser == 2 || user.eOrderBookUser == 3).toList();
 
     setState(() {
       users = filteredUsers;
@@ -165,38 +191,31 @@ class _OrderDetailsLoginState extends State<OrderDetailsLogin> {
                   SizedBox(
                     height: 10,
                   ),
-                  Row(
-                    children: [
-                      ElevatedButton(
-                        onPressed: () async {
-                          final DateTime? pickedStartDate = await showDatePicker(
-                            context: context,
-                            initialDate: selectedStartDate ?? DateTime.now(),
-                            firstDate: DateTime(2000),
-                            lastDate: DateTime(2101),
-                          );
+                  ElevatedButton(
+                    onPressed: () async {
+                      final DateTime? pickedStartDate = await showDatePicker(
+                        context: context,
+                        initialDate: selectedStartDate ?? DateTime.now(),
+                        firstDate: DateTime(2000),
+                        lastDate: DateTime(2101),
+                      );
 
-                          final DateTime? pickedEndDate = await showDatePicker(
-                            context: context,
-                            initialDate: selectedEndDate ?? DateTime.now(),
-                            firstDate: DateTime(2000),
-                            lastDate: DateTime(2101),
-                          );
+                      final DateTime? pickedEndDate = await showDatePicker(
+                        context: context,
+                        initialDate: selectedEndDate ?? DateTime.now(),
+                        firstDate: DateTime(2000),
+                        lastDate: DateTime(2101),
+                      );
 
-                          if (pickedStartDate != null && pickedEndDate != null) {
-                            setState(() {
-                              selectedStartDate = pickedStartDate;
-                              selectedEndDate = pickedEndDate;
-                            });
-                          }
-                        },
-                        child: Text('Select Start and End Dates'),
-                      ),
-                      if (selectedStartDate != null && selectedEndDate != null)
-                        Text('${selectedStartDate!.toString().split(' ')[0]} - ${selectedEndDate!.toString().split(' ')[0]}'),
-                    ],
+                      if (pickedStartDate != null && pickedEndDate != null) {
+                        setState(() {
+                          selectedStartDate = pickedStartDate;
+                          selectedEndDate = pickedEndDate;
+                        });
+                      }
+                    },
+                    child: Text('Select Start and End Dates'),
                   ),
-
                   if (selectedStartDate != null && selectedEndDate != null)
                     Text(
                       'Selected Dates: ${selectedStartDate!.day}/${selectedStartDate!.month}/${selectedStartDate!.year} - ${selectedEndDate!.day}/${selectedEndDate!.month}/${selectedEndDate!.year}',
@@ -411,10 +430,29 @@ class _OrderDetailsLoginState extends State<OrderDetailsLogin> {
         centerTitle: true,
         automaticallyImplyLeading: true,
         title: Text('Order Details'),
+        leading: IconButton(
+            onPressed: () async {
+              bool confirmDelete = await showLogoutDialog(context);
+              if (confirmDelete) {
+                SharedPreferences s = await SharedPreferences.getInstance();
+                s.clear();
+                Navigator.pushAndRemoveUntil(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const LoginScreen(),
+                    ),
+                        (route) => false);
+              } else {
+                // Cancel delete action
+              }
+            },
+            icon: const Icon(
+              Icons.logout,
+            )),
         actions: [
-          IconButton(onPressed: () {
-            _getDistCode();
-            showInputDialog();
+          IconButton(onPressed: () async {
+            await _getDistCode();
+            await showInputDialog();
           }, icon: Icon(Icons.calendar_month))
         ],
       ),
@@ -495,7 +533,7 @@ class _OrderDetailsLoginState extends State<OrderDetailsLogin> {
             ),
           if (!isLoading && orderData.isEmpty)
             Center(
-              heightFactor: 2,
+              heightFactor: 1,
               child: Lottie.asset(kIsWeb
                   ? 'not_found_data.json'
                   : 'assets/not_found_data.json'),

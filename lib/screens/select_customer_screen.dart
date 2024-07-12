@@ -308,7 +308,7 @@ class _SelectCustomerScreenState extends State<SelectCustomerScreen> {
                                               MaterialPageRoute(
                                                 builder: (context) =>
                                                     ProductAutoComplete(
-                                                  customer: items[index],
+                                                  customer: _searchResult[index],
                                                   area: widget.areaId,
                                                   sector: widget.sectorId,
                                                 ),
@@ -378,8 +378,7 @@ class _SelectCustomerScreenState extends State<SelectCustomerScreen> {
                                                                     (context) =>
                                                                         ProductAutoComplete(
                                                                   customer:
-                                                                      items[
-                                                                          index],
+                                                                  _searchResult[index],
                                                                   area: widget
                                                                       .areaId,
                                                                   sector: widget
@@ -405,7 +404,7 @@ class _SelectCustomerScreenState extends State<SelectCustomerScreen> {
                                                   MaterialPageRoute(
                                                     builder: (context) =>
                                                         ProductAutoComplete(
-                                                      customer: items[index],
+                                                      customer: _searchResult[index],
                                                       area: widget.areaId,
                                                       sector: widget.sectorId,
                                                     ),
@@ -414,6 +413,18 @@ class _SelectCustomerScreenState extends State<SelectCustomerScreen> {
                                           }
                                         }
                                       },
+                                      // onTap: () {
+                                      //   Navigator.push(
+                                      //       context,
+                                      //       MaterialPageRoute(
+                                      //         builder: (context) =>
+                                      //             ProductAutoComplete(
+                                      //               customer: items[index],
+                                      //               area: widget.areaId,
+                                      //               sector: widget.sectorId,
+                                      //             ),
+                                      //       ));
+                                      // },
                                       child: Card(
                                         color: _searchResult[index].cardColor,
                                         child: Padding(
@@ -440,9 +451,25 @@ class _SelectCustomerScreenState extends State<SelectCustomerScreen> {
                                                           fontWeight:
                                                               FontWeight.bold),
                                                     ),
-                                                    Text(_searchResult[index]
-                                                        .address , style: TextStyle(
-                                                      color: _searchResult[index].cardColor != null ? Colors.white : Colors.black,),),
+                                                    Row(
+                                                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                                      children: [
+                                                        Text(_searchResult[index]
+                                                            .address , style: TextStyle(
+                                                          color: _searchResult[index].cardColor != null ? Colors.white : Colors.black,),),
+                                                        _searchResult[index].lic_exp_date == '1900-01-01'
+                                                        ?Text('Lic Exp : ...   ',style: TextStyle(
+
+                                                            color: _searchResult[index].cardColor != null ? Colors.white  : DateTime.parse(_searchResult[index].lic_exp_date.toString()).isBefore(DateTime.now())
+                                                                ? Colors.red
+                                                                : Colors.black, fontWeight: FontWeight.bold))
+                                                        :Text('Lic Exp : ${_searchResult[index].lic_exp_date}  ' ,style: TextStyle(
+
+                                                            color: _searchResult[index].cardColor != null ? Colors.white  : DateTime.parse(_searchResult[index].lic_exp_date.toString()).isBefore(DateTime.now())
+                                                                ? Colors.red
+                                                                : Colors.black, fontWeight: FontWeight.bold),),
+                                                      ],
+                                                    ),
                                                   ],
                                                 ),
                                               ),
@@ -463,6 +490,7 @@ class _SelectCustomerScreenState extends State<SelectCustomerScreen> {
                                   physics: const BouncingScrollPhysics(
                                       parent: ClampingScrollPhysics()),
                                   itemBuilder: (context, index) {
+                                    print('checkLicExpDate : $checkLicExpDate');
                                     return InkWell(
                                       onTap: () async {
                                         if (checkLicExpDate == 'N') {
@@ -577,6 +605,18 @@ class _SelectCustomerScreenState extends State<SelectCustomerScreen> {
                                           }
                                         }
                                       },
+                                      // onTap: () {
+                                      //   Navigator.push(
+                                      //       context,
+                                      //       MaterialPageRoute(
+                                      //         builder: (context) =>
+                                      //             ProductAutoComplete(
+                                      //               customer: items[index],
+                                      //               area: widget.areaId,
+                                      //               sector: widget.sectorId,
+                                      //             ),
+                                      //       ));
+                                      // },
                                       child: Card(
                                         color: items[index].cardColor,
                                         child: Padding(
@@ -611,14 +651,18 @@ class _SelectCustomerScreenState extends State<SelectCustomerScreen> {
                                                             .address , style: TextStyle(
                                                           color: items[index].cardColor != null ? Colors.white : Colors.black,
                                                         ),),
-                                                        Text('Lic Exp : ${items[index].lic_exp_date}  ' ,style: TextStyle(
+                                                        items[index].lic_exp_date == '1900-01-01'
+                                                            ?Text('Lic Exp : ...   ',style: TextStyle(
 
-                                                          color: items[index].cardColor != null ? Colors.white  : DateTime.parse(items[index]
-                                                              .lic_exp_date
-                                                              .toString())
-                                                              .isBefore(DateTime.now())
-                                                              ? Colors.red
-                                                              : Colors.black, fontWeight: FontWeight.bold),),
+                                                            color: items[index].cardColor != null ? Colors.white  : DateTime.parse(items[index].lic_exp_date.toString()).isBefore(DateTime.now())
+                                                                ? Colors.red
+                                                                : Colors.black, fontWeight: FontWeight.bold))
+                                                            :Text('Lic Exp : ${items[index].lic_exp_date}  ' ,style: TextStyle(
+
+                                                            color: items[index].cardColor != null ? Colors.white  : DateTime.parse(items[index].lic_exp_date.toString()).isBefore(DateTime.now())
+                                                                ? Colors.red
+                                                                : Colors.black, fontWeight: FontWeight.bold),),
+
                                                       ],
                                                     ),
                                                   ],

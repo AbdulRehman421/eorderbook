@@ -311,14 +311,45 @@ class DatabaseHelper {
 
     return jsonOrders;
   }
-  Future<List<Account>> getAccounts() async {
-    final Database db = await database;
-    final List<Map<String, dynamic>> maps = await db.query('account');
+  Future<List<Account>> getAccounts(String areaCd, String? query) async {
+    final db = await database;
+    List<Map<String, dynamic>> maps;
+
+    if (query != null && query.isNotEmpty) {
+      maps = await db.rawQuery(
+        "SELECT * FROM account WHERE areacd=? AND name LIKE ? ORDER BY name",
+        [areaCd, '%$query%'],
+      );
+    } else {
+      maps = await db.rawQuery(
+        "SELECT * FROM account WHERE areacd=? ORDER BY name",
+        [areaCd],
+      );
+    }
+
     return List.generate(maps.length, (i) {
       return Account.fromMap(maps[i]);
     });
   }
-  Future<List<Product>> getProducts() async {
+
+  Future<int> getAccountCount(String areaCd, {String? query}) async {
+    final db = await database;
+    List<Map<String, dynamic>> result;
+
+    if (query != null && query.isNotEmpty) {
+      result = await db.rawQuery(
+        "SELECT COUNT(*) FROM account WHERE areacd=? AND name LIKE ?",
+        [areaCd, '%$query%'],
+      );
+    } else {
+      result = await db.rawQuery(
+        "SELECT COUNT(*) FROM account WHERE areacd=?",
+        [areaCd],
+      );
+    }
+
+    return Sqflite.firstIntValue(result) ?? 0;
+  }  Future<List<Product>> getProducts() async {
     final Database db = await database;
     final List<Map<String, dynamic>> maps = await db.query('product');
     return List.generate(maps.length, (i) {

@@ -13,6 +13,9 @@ import 'package:eorderbook/models/maincode.dart';
 import 'package:eorderbook/services/maincodedb.dart';
 import 'package:http/http.dart' as http;
 
+import '../EOrderBookOrders/OrderDetailLogin/orderdetailbylogin.dart';
+import '../EOrderBookOrders/SalesDetails/SalesDetails.dart';
+
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -204,7 +207,18 @@ class _LoginScreenState extends State<LoginScreen> {
                       Navigator.of(context).pop();
                       Navigator.pushReplacement(
                         context,
-                        MaterialPageRoute(builder: (context) =>  OrderLoginHome()),
+                        MaterialPageRoute(builder: (context) =>  SalesDetails()),
+                      );
+                    }  else if (eorderbookuser == 3) {
+                      await SharedPreferences.getInstance().then((prefs) {
+                        prefs.setInt('eorderbookuser', user['eorderbookuser']);
+                      });
+                      await Utils.showLoaderDialog(context ,"Logging In", "Please wait..." );
+                      Utils.showToast('Login successful');
+                      Navigator.of(context).pop();
+                      Navigator.pushReplacement(
+                        context,
+                        MaterialPageRoute(builder: (context) =>  OrderDetailsLogin()),
                       );
                     } else {
                       // Handle other cases if needed
@@ -319,12 +333,14 @@ class _LoginScreenState extends State<LoginScreen> {
                     SharedPreferences prefs = await SharedPreferences.getInstance();
                     String checkLicExpDate = await apiService.getCheckLicExpDate(distCodeController.text);
                     prefs.setString('check_lic_expdate', checkLicExpDate);
+                    print('fff $checkLicExpDate');
                   } else {
                     Utils.showToast('Invalid distributor code or security key.');
                   }
                 } else {
                   Utils.showToast('Please enter both distributor code and security key');
                 }
+                await _getDistCode();
               },
               child: Text('Sync Data'),
             ),

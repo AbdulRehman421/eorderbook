@@ -5,6 +5,9 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:eorderbook/models/maincode.dart';
 import 'package:eorderbook/services/maincodedb.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
+import '../../screens/login_screen.dart';
 
 class SalesDetails extends StatefulWidget {
   @override
@@ -32,6 +35,32 @@ class _SalesDetailsState extends State<SalesDetails> {
     fetchInvoices(
         _mainCode.toString(), formattedStartDate, formattedEndDate);
   }
+  Future<bool> showLogoutDialog(BuildContext context) async {
+    return await showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text("Logout Confirmation"),
+          content: const Text("Are you sure to logout from this account?"),
+          actions: <Widget>[
+            TextButton(
+              child: const Text("CANCEL"),
+              onPressed: () {
+                Navigator.of(context).pop(false);
+              },
+            ),
+            TextButton(
+              child: const Text("YES"),
+              onPressed: () {
+                Navigator.of(context).pop(true);
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   Future<void> fetchInvoices(
       String mainCode, String startDate, String endDate) async {
     final url = Uri.parse(
@@ -68,6 +97,28 @@ class _SalesDetailsState extends State<SalesDetails> {
     return totalBalance;
   }
   Future<void> showInputDialog(BuildContext context) async {
+    final DateTime? pickedStartDate =
+    await showDatePicker(
+      context: context,
+      initialDate: startDate ?? DateTime.now(),
+      firstDate: DateTime(2000),
+      lastDate: DateTime(2101),
+    );
+
+    final DateTime? pickedEndDate = await showDatePicker(
+      context: context,
+      initialDate: startDate ?? DateTime.now(),
+      firstDate: DateTime(2000),
+      lastDate: DateTime(2101),
+    );
+
+    if (pickedStartDate != null &&
+        pickedEndDate != null) {
+      setState(() {
+        startDate = pickedStartDate;
+        endDate = pickedEndDate;
+      });
+    }
     return showDialog(
       context: context,
       builder: (BuildContext context) {
@@ -104,6 +155,23 @@ class _SalesDetailsState extends State<SalesDetails> {
                               startDate = pickedStartDate;
                               endDate = pickedEndDate;
                             });
+                          }
+                          var connectivityResult = await Connectivity().checkConnectivity();
+                          if (connectivityResult == ConnectivityResult.none) {
+                            // No internet connection
+                            ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                              content: Text('No internet connection'),
+                            ));
+                          } else {
+                            // Internet connection available, proceed with the API call
+                            _mainCode;
+                            String formattedStartDate =
+                            startDate.toIso8601String().split('T')[0];
+                            String formattedEndDate =
+                            endDate.toIso8601String().split('T')[0];
+                            fetchInvoices(
+                                _mainCode.toString(), formattedStartDate, formattedEndDate);
+                            Navigator.of(context).pop();
                           }
                         },
                         child: Text('Select Start and End Dates'),
@@ -167,14 +235,42 @@ class _SalesDetailsState extends State<SalesDetails> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        leading: IconButton(
+            onPressed: () async {
+              bool confirmDelete = await showLogoutDialog(context);
+              if (confirmDelete) {
+                SharedPreferences s = await SharedPreferences.getInstance();
+                s.clear();
+                Navigator.pushAndRemoveUntil(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const LoginScreen(),
+                    ),
+                        (route) => false);
+              } else {
+                // Cancel delete action
+              }
+            },
+            icon: const Icon(
+              Icons.logout,
+            )),
         actions: [
-          IconButton(
+          ElevatedButton(
               onPressed: () {
                 showInputDialog(context);
               },
-              icon: Icon(Icons.date_range))
+              child: Row(
+                children: [
+                  Icon(Icons.calendar_month),
+                  SizedBox(
+                    width: 5,
+                  ),
+                  Text('Select Date'),
+                ],
+              ))
         ],
-        title: Text('Invoice Viewer'),
+        centerTitle: true,
+        title: Text('Sales Dashboard'),
       ),
       body: RefreshIndicator(
         onRefresh: _refreshData,
@@ -183,100 +279,100 @@ class _SalesDetailsState extends State<SalesDetails> {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               SizedBox(height: 20),
-              if(invoices.isEmpty)
-                Padding(
-                  padding: const EdgeInsets.all(10.0),
-                  child: SingleChildScrollView(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: [
-                        Text('Main Code : $_mainCode',style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold
-                        ),),
-                        SizedBox(
-                          height: 50,
-                        ),
-                        ElevatedButton(
-                          onPressed: () async {
-                            final DateTime? pickedStartDate =
-                            await showDatePicker(
-                              context: context,
-                              initialDate: startDate ?? DateTime.now(),
-                              firstDate: DateTime(2000),
-                              lastDate: DateTime(2101),
-                            );
-
-                            final DateTime? pickedEndDate = await showDatePicker(
-                              context: context,
-                              initialDate: startDate ?? DateTime.now(),
-                              firstDate: DateTime(2000),
-                              lastDate: DateTime(2101),
-                            );
-
-                            if (pickedStartDate != null &&
-                                pickedEndDate != null) {
-                              setState(() {
-                                startDate = pickedStartDate;
-                                endDate = pickedEndDate;
-                              });
-                            }
-                          },
-                          child: Text('Select Start and End Dates'),
-                        ),
-                        SizedBox(
-                          height: 50,
-                        ),
-                        if (startDate != null && endDate != null)
+              // if(invoices.isEmpty)
+              //   Padding(
+              //     padding: const EdgeInsets.all(10.0),
+              //     child: SingleChildScrollView(
+              //       child: Column(
+              //         crossAxisAlignment: CrossAxisAlignment.center,
+              //         children: [
+              //           Text('Main Code : $_mainCode',style: TextStyle(
+              //             fontSize: 18,
+              //             fontWeight: FontWeight.bold
+              //           ),),
+              //           SizedBox(
+              //             height: 50,
+              //           ),
+              //           ElevatedButton(
+              //             onPressed: () async {
+              //               final DateTime? pickedStartDate =
+              //               await showDatePicker(
+              //                 context: context,
+              //                 initialDate: startDate ?? DateTime.now(),
+              //                 firstDate: DateTime(2000),
+              //                 lastDate: DateTime(2101),
+              //               );
+              //
+              //               final DateTime? pickedEndDate = await showDatePicker(
+              //                 context: context,
+              //                 initialDate: startDate ?? DateTime.now(),
+              //                 firstDate: DateTime(2000),
+              //                 lastDate: DateTime(2101),
+              //               );
+              //
+              //               if (pickedStartDate != null &&
+              //                   pickedEndDate != null) {
+              //                 setState(() {
+              //                   startDate = pickedStartDate;
+              //                   endDate = pickedEndDate;
+              //                 });
+              //               }
+              //             },
+              //             child: Text('Select Start and End Dates'),
+              //           ),
+              //           SizedBox(
+              //             height: 50,
+              //           ),
+              //           if (startDate != null && endDate != null)
                           Text(
                               '${startDate!.toString().split(' ')[0]}   to   ${endDate!.toString().split(' ')[0]}',style: TextStyle(
                             fontWeight: FontWeight.bold,
                             fontSize: 18
                           ),),
                         SizedBox(
-                          height: 50,
+                          height: 10,
                         ),
-                        ElevatedButton(
-                          child: _isLoading
-                              ? CircularProgressIndicator() // Show CircularProgressIndicator when loading
-                              : Text(
-                            'Submit',
-                            style: TextStyle(
-                              fontSize: 18,
-                            ),
-                          ),
-                          onPressed: () async {
-                            var connectivityResult = await Connectivity().checkConnectivity();
-                            if (connectivityResult == ConnectivityResult.none) {
-                              // No internet connection
-                              ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                                content: Text('No internet connection'),
-                              ));
-                            } else {
-                              // Internet connection available, proceed with the API call
-                              setState(() {
-                                _isLoading = true; // Set loading state to true
-                              });
-
-                              _mainCode;
-                              String formattedStartDate =
-                              startDate.toIso8601String().split('T')[0];
-                              String formattedEndDate =
-                              endDate.toIso8601String().split('T')[0];
-                              await fetchInvoices(
-                                  _mainCode.toString(), formattedStartDate, formattedEndDate);
-
-                              setState(() {
-                                _isLoading = false; // Reset loading state after API call completes
-                              });
-                            }
-                          },
-                        ),
-
-                      ],
-                    ),
-                  ),
-                ),
+              //           ElevatedButton(
+              //             child: _isLoading
+              //                 ? CircularProgressIndicator() // Show CircularProgressIndicator when loading
+              //                 : Text(
+              //               'Submit',
+              //               style: TextStyle(
+              //                 fontSize: 18,
+              //               ),
+              //             ),
+              //             onPressed: () async {
+              //               var connectivityResult = await Connectivity().checkConnectivity();
+              //               if (connectivityResult == ConnectivityResult.none) {
+              //                 // No internet connection
+              //                 ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+              //                   content: Text('No internet connection'),
+              //                 ));
+              //               } else {
+              //                 // Internet connection available, proceed with the API call
+              //                 setState(() {
+              //                   _isLoading = true; // Set loading state to true
+              //                 });
+              //
+              //                 _mainCode;
+              //                 String formattedStartDate =
+              //                 startDate.toIso8601String().split('T')[0];
+              //                 String formattedEndDate =
+              //                 endDate.toIso8601String().split('T')[0];
+              //                 await fetchInvoices(
+              //                     _mainCode.toString(), formattedStartDate, formattedEndDate);
+              //
+              //                 setState(() {
+              //                   _isLoading = false; // Reset loading state after API call completes
+              //                 });
+              //               }
+              //             },
+              //           ),
+              //
+              //         ],
+              //       ),
+              //     ),
+              //   ),
               Expanded(
                 child: ListView.builder(
                   itemCount: invoices.length,

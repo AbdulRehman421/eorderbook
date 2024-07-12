@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:eorderbook/EOrderBookOrders/SalesDetails/CashIn.dart';
 import 'package:eorderbook/EOrderBookOrders/SalesDetails/CashOut.dart';
 import 'package:eorderbook/EOrderBookOrders/SalesDetails/CheckProductOnBranches.dart';
+import 'package:eorderbook/EOrderBookOrders/SalesDetails/Closing%20Stock/PharmacyWise/pharmacywise.dart';
 import 'package:eorderbook/EOrderBookOrders/SalesDetails/Closing%20Stock/Purchase%20Order%20Print/PurchaseOrderPrint.dart';
 import 'package:eorderbook/EOrderBookOrders/SalesDetails/CompanyWise.dart';
 import 'package:eorderbook/EOrderBookOrders/SalesDetails/DistributorWise.dart';
@@ -149,7 +150,7 @@ class _ClosingStockState extends State<ClosingStock> {
                 Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (context) => PurchaseOrderDistributor(
+                      builder: (context) => PharmacyWise(
                           mainCode: widget.mainCode,
                           distCode: widget.distCode,
                           startDate: widget.startDate,
@@ -160,12 +161,37 @@ class _ClosingStockState extends State<ClosingStock> {
                 child: Padding(
                   padding: EdgeInsets.symmetric(horizontal: 40, vertical: 10),
                   child: Text(
-                    'Purchase Order',
+                    'Purchase Order ',
                     style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                   ),
                 ),
               ),
             ),
+            // SizedBox(
+            //   height: 20,
+            // ),
+            // GestureDetector(
+            //   onTap: () {
+            //     Navigator.push(
+            //         context,
+            //         MaterialPageRoute(
+            //           builder: (context) => PurchaseOrderDistributor(
+            //               mainCode: widget.mainCode,
+            //               distCode: widget.distCode,
+            //               startDate: widget.startDate,
+            //               endDate: widget.endDate),
+            //         ));
+            //   },
+            //   child: Card(
+            //     child: Padding(
+            //       padding: EdgeInsets.symmetric(horizontal: 40, vertical: 10),
+            //       child: Text(
+            //         'Purchase Order',
+            //         style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+            //       ),
+            //     ),
+            //   ),
+            // ),
             SizedBox(
               height: 20,
             ),

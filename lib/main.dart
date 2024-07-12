@@ -7,6 +7,8 @@ import 'package:flutter/material.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'EOrderBookOrders/SalesDetails/SalesDetails.dart';
+
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -69,7 +71,9 @@ class _MyAppState extends State<MyApp> {
             else if(eorderbookuser == 1){
               return InvoiceListScreen();
             }else if (eorderbookuser == 2) {
-              return OrderLoginHome();
+              return SalesDetails();
+            }else if (eorderbookuser == 3) {
+              return OrderDetailsLogin();
             } else {
               // Handle other cases if needed
               return Container(); // Placeholder, replace with appropriate widget

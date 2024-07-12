@@ -113,12 +113,15 @@ class _AllSalesDetailsState extends State<AllSalesDetails> {
                                       fontSize: 19,
                                       fontWeight: FontWeight.bold
                                   ),),
-                                Text("Sale : ${total}", style: TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.bold
+                                Text("Last Bill : ${invoice['lastinvno']}   ${invoice['lastinvtime']} ", style: TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold
                                 ),
                                 ),
-                                Text("Total Bills : ${invoice['totolInvoices']}         Last Bill : ${invoice['lastInv']}",
+                                Text("Sale : ${total}         Total Bills : ${invoice['totolInvoices']}", style: TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold
+                                ),
                                 ),
 
                               ],

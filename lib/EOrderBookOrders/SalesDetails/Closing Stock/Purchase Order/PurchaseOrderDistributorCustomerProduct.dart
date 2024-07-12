@@ -19,11 +19,13 @@ import '../../../../utils/Utils.dart';
 
 class PurchaseOrderDistributorCustomerProduct extends StatefulWidget {
   final String mainCode;
+  final String? order;
   final String distCode;
   final String cdistCode;
   final List<String> compCode;
 
   PurchaseOrderDistributorCustomerProduct({
+    this.order,
     required this.mainCode,
     required this.distCode,
     required this.cdistCode,
@@ -116,8 +118,18 @@ class _PurchaseOrderDistributorCustomerProductState
 
   void fetchDataAndStoreLocally() async {
     String companyCodesString = widget.compCode.join(',');
-    final response = await http.get(Uri.parse(
-        'https://seasoftsales.com/eorderbook/get_stock_product_multi_company.php?companycode=${companyCodesString}&dist_code=${widget.distCode}'));
+    print('ddd ${companyCodesString}');
+
+    // Construct the base URL
+    String url = 'https://seasoftsales.com/eorderbook/get_stock_product_multi_company.php?companycode=${companyCodesString}&dist_code=${widget.distCode}';
+
+    // Add the orderqty parameter only if widget.order is not null
+    if (widget.order != null) {
+      url += '&orderqty=${widget.order}';
+    }
+
+    final response = await http.get(Uri.parse(url));
+
     if (response.statusCode == 200) {
       final List<dynamic> responseData = json.decode(response.body);
       await dbHelper.clearProducts();
@@ -534,7 +546,7 @@ class _PurchaseOrderDistributorCustomerProductState
           ],
           title: Text('Product List'),
         ),
-        body: _products != null
+        body: _products.isNotEmpty
             ? Column(
                 children: [
                   Card(

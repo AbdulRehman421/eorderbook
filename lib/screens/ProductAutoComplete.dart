@@ -1122,8 +1122,14 @@ class _ProductAutoCompleteState extends State<ProductAutoComplete> {
 
       setState(() {
         searchFromStart
-        ? _products = allProducts.where((product) =>product.name.toLowerCase().startsWith(query.toLowerCase())).toList()
-            : _products = allProducts.where((product) =>product.name.toLowerCase().contains(query.toLowerCase())).toList();
+        ? _products = allProducts.where((product) {
+          return product.name.toLowerCase().startsWith(query.toLowerCase())  ||
+           product.pCode.toLowerCase().startsWith(query.toLowerCase());
+        }).toList()
+            : _products = allProducts.where((product) {
+              return product.name.toLowerCase().contains(query.toLowerCase()) ||
+              product.pCode.toLowerCase().contains(query.toLowerCase());
+            }).toList();
       });
     } else {
       setState(() {
@@ -1293,14 +1299,15 @@ class _ProductAutoCompleteState extends State<ProductAutoComplete> {
                 const SizedBox(
                   height: 6,
                 ),
-                !_products[index].selected
-                    ? Container()
-                    : CircleAvatar(
-                  maxRadius: 16,
+                // _products[index].selected
+                //     ? Container()
+                //     :
+                CircleAvatar(
+                  maxRadius: 18,
                   backgroundColor: Colors.red,
                   child: GestureDetector(
                     onTap: () async {
-                      showSearchWarningAlert(
+                      showSelectedWarningAlert(
                           context,
                           index,
                           0);
@@ -1308,7 +1315,7 @@ class _ProductAutoCompleteState extends State<ProductAutoComplete> {
                     child: const Icon(
                       Icons.remove,
                       size: 18,
-                      color: Colors.white,
+                      color: Colors.black,
                     ),
                   ),
                 ),
@@ -1402,6 +1409,11 @@ class _ProductAutoCompleteState extends State<ProductAutoComplete> {
                       // },
                       onPressed: () {
                         onDelete(index);
+                        setState(() {
+                          _controller.clear();
+                          _products.clear();
+                          _isSearching = false;
+                        });
                         Navigator.of(context).pop();
                       },
                       child: const Text("Yes")),
